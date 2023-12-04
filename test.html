@@ -1,0 +1,555 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>test</title>
+        <style>
+            div, input, button
+            {
+                display: inline-block;
+                position: absolute;
+                box-sizing: border-box;
+                font-family: monospace;
+            }
+            body
+            {
+                display: inline-block;
+                position: absolute;
+
+                width: 100%;
+                height: 100%;
+                padding: 0px;
+                margin: 0px;
+            }
+            #root
+            {
+                width: 100%;
+                height: 100%;
+                left: 0px;
+                top: 0px;
+                background: rgb(220,220,220);
+                border: solid 2px rgb(200,0,0);
+            }
+            .sidebar_wrapper
+            {
+                height: 100%;
+                width: 25%;
+                left: 0px;
+                top: 0px;
+                background: rgb(180,180,180);
+            }
+            .tooltip_container
+            {
+                left: calc(100% + 10px);
+                top: 10px;
+                width: 100%;
+                height: 25%;
+                background: rgb(255,200,200);
+                border: solid 2px rgb(200,0,0);
+            }
+            .target_input
+            {
+                background: rgb(255,255,255);
+                border: solid 1px rgb(0,0,0);
+                width: calc(100% - 20px);
+                height: 40px;
+                left: 10px;
+                top: 10px;
+            }
+            .video_button
+            {
+                background: rgb(160,160,160);
+                border: solid 1px rgb(0,0,0);
+                color: rgb(0,0,0);
+
+                width: calc(100% - 20px);
+                height: 40px;
+                left: 10px;
+                top: 90px;
+                cursor: pointer;
+            }
+
+            .map_overlay
+            {
+                left: 25%;
+                top: 0px;
+                right: 0px;
+                bottom: 0px;
+                background: transparent;
+                border: dotted 1px rgb(0,0,200);
+            }
+            .player_widget
+            {
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                top: 10px;
+                border: dashed 1px rgb(0,200,0);
+            }
+            .player_container
+            {
+                left: 0px;
+                bottom: 38px;
+                width: 50%;
+                height: 25%;
+                background: rgb(100,100,100);
+                border: solid 1px rgb(0,0,0);
+            }
+            .control_bar
+            {
+                left: 10px;
+                bottom: 10px;
+                height: 40px;
+                right: 10px;
+                background: rgb(255,255,255);
+
+                white-space: nowrap;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+            .tool_bar
+            {
+                left: 0px;
+                bottom:100%;
+                height: 40px;
+                width: 100%;
+                background: rgb(37, 43, 54);
+
+                white-space: nowrap;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+            .tool_bar button
+            {
+                position: relative;
+                border: solid 1px rgb(0,0,0);
+                background: transparent;
+                width: 32px;
+                height: 32px;
+                margin: 4px;
+                cursor: pointer;
+                vertical-align:  middle;
+            }
+            .tool_bar .close_button
+            {
+                position: absolute;
+                right: 4px;
+            }
+
+            .control_bar_button_wrapper
+            {
+                position: relative;
+                border: solid 1px rgb(0,0,0);
+                background: rgb(255,255,255);
+                width: 32px;
+                height: 32px;
+
+                margin: 4px;
+            }
+
+            .control_bar button
+            {
+                width: 100%;
+                height: 100%;
+                background: rgb(255,200,200);
+                border: none;
+
+                color: rgb(0,0,0);
+                text-align: center;
+                line-height: 28px;
+                vertical-align: middle;
+                font-size: 15px;
+                vertical-align: middle;
+
+                cursor: pointer;
+            }
+
+            .controlbar_wrapper
+            {
+                left: 2px;
+                right: 2px;
+            }
+
+            .timestamp_wrapper
+            {
+                display: inline-block;
+                position: absolute;
+                top: 4px;
+                right: 2px;
+                background: rgb(220,220,255);       
+                width: 30%;
+                min-width: 140px;
+                height: 32px;
+                font-size: 16px;
+                line-height: 34px;
+                text-align: right;
+                vertical-align: middle;
+                color: rgb(0,0,0);
+                padding-right: 4px;
+            }
+
+            .timestamp_wrapper span:first-child
+            {
+                margin-right: 8px;
+            }
+            .timestamp_wrapper span:first-child::after
+            {
+                content: "/";
+                display: inline-block;
+                width: 16px;
+                height: 32px;
+            }
+
+            .video_alt_control_bar button:focus
+            {
+                outline: solid 2px rgb(255,255,0);
+            }
+
+            .canvas_wrapper
+            {
+                left: 0px;
+                right: 0px;
+                top: 0px;
+                bottom: 0px;
+            }
+
+            .video_canvas
+            {
+                position: absolute;
+                display: inline-block;
+                width: 100%;
+                height: 100%;
+                left: 0px;
+                top: 0px;
+
+                outline: dotted 1px rgb(100,200,255);
+                outline-offset: -3px;
+                
+            }
+
+            .extra_canvas
+            {
+                background: rgba(255,255,255,0.3);
+            }
+        </style>
+        <link rel="stylesheet" href="content.css">
+    </head>
+    <body>
+        <div id="root"></div>
+
+        <script>
+            const root_node = document.getElementById("root");
+            
+            let widgets_node = null;
+            const initWidgets = () =>
+            {
+                const overlays_node = document.createElement("div");
+                overlays_node.className = "components__WidgetsWrapper-sc-ugnmab-8 map_overlay";
+
+                widgets_node = document.createElement("div");
+                widgets_node.className= "WidgetLayer__WidgetContainer-sc-18xq6mq-0 player_widget";
+
+                root_node.appendChild(overlays_node);
+                overlays_node.appendChild(widgets_node);
+            };
+
+            const initControlBar = () =>
+            {
+                let timer = null;
+                let timestamp = 0;
+                let timesize = parseInt(Math.random() * 10000);
+
+                let timestamp_cap = null;
+                let timesize_cap = null;
+
+                const show_time = (ts, len) =>
+                {
+                    if (typeof(len) == "number")
+                    {
+                        timesize = Math.max(0, len);
+                    }
+
+                    if (typeof(ts) == "number")
+                    {
+                        timestamp = Math.min(timesize, Math.max(0, ts));
+                    }
+                    
+                    if (!timestamp_cap || !timesize_cap)
+                    {
+                        console.log("%ctimestamp is unavailable", "color: rgb(200,0,0)");
+                    }
+
+                    if (timestamp_cap) timestamp_cap.firstChild.data = timestamp;
+                    if (timesize_cap) timesize_cap.firstChild.data = timesize;
+                };
+
+                const initTimespan = (cb_wrapper) =>
+                {
+                    const timestamp_wrapper = document.createElement("span");
+                    timestamp_wrapper.className = "sc-idXgbr timestamp_wrapper";
+
+                    timestamp_cap = document.createElement("span");
+                    timestamp_cap.innerText = timestamp;
+                    timestamp_cap.setAttribute("data-testid", "current-time");
+                    timestamp_wrapper.appendChild(timestamp_cap);
+
+                    timesize_cap = document.createElement("span");
+                    timesize_cap.innerText = timesize;
+                    timesize_cap.setAttribute("data-testid", "video-duration");
+                    timestamp_wrapper.appendChild(timesize_cap);
+
+                    cb_wrapper.appendChild(timestamp_wrapper);
+                };
+
+                const back10_wrapper = document.createElement("div");
+                back10_wrapper.className = "control_bar_button_wrapper";
+
+                const back10 = document.createElement("button");
+                back10.onclick = e =>
+                {
+                    show_time(timestamp -= 10);
+                    console.log("%cBACK 10 SECONDS", "color: rgb(200,0,0); font-size: 24px");
+                };
+                back10_wrapper.appendChild(back10);
+
+                const back1_wrapper = document.createElement("div");
+                back1_wrapper.className = "control_bar_button_wrapper";
+
+                const back1 = document.createElement("button");
+                back1.onclick = e =>
+                {
+                    show_time(timestamp -= 1);
+                    console.log("%cBACK 1 FRAME", "color: rgb(200,0,0); font-size: 24px");
+                };
+                back1_wrapper.appendChild(back1); 
+
+                const play_wrapper = document.createElement("div");
+                play_wrapper.className = "control_bar_button_wrapper";
+
+                const play = document.createElement("button");
+                play.onclick = e =>
+                {
+                    if (!timer)
+                    {
+                        timer = setInterval(() => show_time(++timestamp), 1000);
+                        console.log("%cPLAY", "color: rgb(200,0,0); font-size: 24px");
+                    }
+                    else
+                    {
+                        clearInterval(timer);
+                        timer = null;
+                        console.log("%cPAUSE", "color: rgb(200,0,0); font-size: 24px");
+                    }
+                };
+                play_wrapper.appendChild(play);
+
+                const forward1_wrapper = document.createElement("div");
+                forward1_wrapper.className = "control_bar_button_wrapper";
+
+                const forward1 = document.createElement("button");
+                forward1.onclick = e =>
+                {
+                    show_time(timestamp += 1);
+                    console.log("%cFORWARD 1 FRAME", "color: rgb(200,0,0); font-size: 24px");
+                };
+                forward1_wrapper.appendChild(forward1);
+
+                const forward10_wrapper = document.createElement("div");
+                forward10_wrapper.className = "control_bar_button_wrapper";
+
+                const forward10 = document.createElement("button");
+                forward10.onclick = e =>
+                {
+                    show_time(timestamp += 10);
+                    console.log("%cFORWARD 10 SECONDS", "color: rgb(200,0,0); font-size: 24px");
+                };
+                forward10_wrapper.appendChild(forward10);
+
+                const mute_wrapper = document.createElement("div");
+                mute_wrapper.className = "control_bar_button_wrapper";
+
+                const mute = document.createElement("button");
+                mute.onclick = e => console.log("%cMUTE", "color: rgb(200,0,0); font-size: 24px");
+                mute_wrapper.appendChild(mute);
+                
+                const cb_wrapper = document.createElement("div");
+                cb_wrapper.className = "sc-dIfARi controlbar_wrapper";
+
+                cb_wrapper.appendChild(back10_wrapper);
+                cb_wrapper.appendChild(back1_wrapper);
+                cb_wrapper.appendChild(play_wrapper);
+                cb_wrapper.appendChild(forward1_wrapper);
+                cb_wrapper.appendChild(forward10_wrapper);
+                cb_wrapper.appendChild(mute_wrapper);
+
+                const controlBar = document.createElement("div");
+                controlBar.className = "sc-hBxehG control_bar";
+                controlBar.setAttribute("data-testid", "controls-bar");
+
+                initTimespan(cb_wrapper);
+                controlBar.appendChild(cb_wrapper);
+                decoder_node.appendChild(controlBar);
+            };
+
+            let lower_canvas_node = null;
+            let upper_canvas_node = null;
+            const initCanvas = () =>
+            {
+                if (!!lower_canvas_node)
+                {
+                    console.log("%ccanvas already exists", "color: rgb(200,0,0)");
+                    return;
+                }
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "canvas-container canvas_wrapper";
+
+                lower_canvas_node = document.createElement("canvas");
+                lower_canvas_node.className = "video_canvas lower-canvas";
+
+                upper_canvas_node = document.createElement("canvas");
+                upper_canvas_node.className = "video_canvas upper-canvas";  
+
+                wrapper.appendChild(lower_canvas_node);
+                wrapper.appendChild(upper_canvas_node);
+                decoder_node.appendChild(wrapper);
+
+                const rect = decoder_node.getBoundingClientRect();
+                lower_canvas_node.width = rect.width;
+                lower_canvas_node.height = rect.height;
+                upper_canvas_node.width = rect.width;
+                upper_canvas_node.height = rect.height;
+            };
+
+            const clearCanvas = () =>
+            {
+                const elements = decoder_node.getElementsByClassName("canvas_wrapper");
+                if (elements.length > 0)
+                {
+                    const container = elements[0];
+                    container.parentNode.removeChild(container);
+                }
+
+                lower_canvas_node = null;
+                upper_canvas_node = null;
+            };
+
+            const initToolBar = (toolBar) =>
+            {
+                const closeButton = document.createElement("button");
+                closeButton.className = "close_button";
+                closeButton.addEventListener("click", e =>
+                {
+                    if (!!decoder_node)
+                    {
+                        console.log("%cplayer removed", "color: rgb(0,200,0)");
+                        clearCanvas();
+
+                        decoder_node.parentNode.removeChild(decoder_node);
+                        decoder_node = null;
+                    }
+                });
+
+                const resetButton = document.createElement("button");
+                resetButton.className = "reset_button";
+                resetButton.addEventListener("click", e =>
+                {
+                    clearCanvas();
+                });
+
+                const drawButton = document.createElement("button");
+                drawButton.className = "draw_button";
+                drawButton.setAttribute("title", "Олівець");
+                drawButton.addEventListener("click", e =>
+                {
+                    initCanvas();
+                });
+
+                toolBar.appendChild(resetButton);
+                toolBar.appendChild(drawButton);
+                toolBar.appendChild(closeButton);
+            };
+
+            let decoder_node = null;
+            const initPlayer = () =>
+            {
+                if (!widgets_node)
+                {
+                    console.log("%cwidgets are unavailable", "color: rgb(200,0,0)");
+                    return;
+                }
+                if (!!decoder_node)
+                {
+                    console.log("%cdecoder already exists", "color: rgb(200,0,0)");
+                    return;
+                }
+
+                decoder_node = document.createElement("div");
+                decoder_node.className = "sc-dkrFOg player_container";
+                decoder_node.setAttribute("data-testid", "media-player-decoder");
+
+                const toolBar = document.createElement("div");
+                toolBar.className = "sc-jSUZER tool_bar";
+
+                widgets_node.appendChild(decoder_node);
+                decoder_node.appendChild(toolBar);
+
+                setTimeout(() => initControlBar(), 1000);
+                initToolBar(toolBar);
+            };
+
+            const initSidebar = () =>
+            {
+                const wrapper = document.createElement("div");
+                wrapper.className = "SideBar__SideBarWrapper-sc-b6zkj3-0 sidebar_wrapper";
+
+                const input = document.createElement("input");
+                input.className = "target_input";
+
+                const button = document.createElement("button");
+                button.className = "video_button";
+                button.innerText = "VIDEO";
+
+                root_node.appendChild(wrapper);
+                wrapper.appendChild(input);
+                wrapper.appendChild(button);
+
+                let tooltip = null;
+                input.addEventListener("mouseover", e =>
+                {
+                    tooltip = document.createElement("div");
+                    tooltip.className = "elements__PanelDescriptionContainer-sc-1oevdk5-2 tooltip_container";
+                    tooltip.setAttribute("data-testid", "description-modal");
+
+                    wrapper.appendChild(tooltip);
+                    console.log("%ctooltip added", "color: rgb(0,200,0)");
+                });
+
+                input.addEventListener("mouseout", e =>
+                {
+                    if (!!tooltip)
+                    {
+                        wrapper.removeChild(tooltip);
+                        tooltip = null;
+
+                        console.log("%ctooltip removed", "color: rgb(0,200,0)");
+                    }
+                });
+
+                button.addEventListener("click", e =>
+                {
+                    initPlayer();
+                    console.log("%cplayer added", "color: rgb(0,200,0)");
+                });
+
+                setTimeout(() =>
+                {
+                    initWidgets();
+                }, 1000);
+            };
+
+            setTimeout(initSidebar, 1000)
+        </script>
+
+        <script src="content.js"></script>
+    </body>
+</html>
