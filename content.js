@@ -913,7 +913,7 @@ const onCanvasMouseOut = e =>
     g_last_p = null;
 };
 
-const cloneCanvasParams = () =>
+const cloneCanvasParams = (trigger) =>
 {
     setTimeout(() =>
     {
@@ -927,8 +927,11 @@ const cloneCanvasParams = () =>
             context.strokeStyle = up_context.strokeStyle;
             context.lineWidth = up_context.lineWidth;
 
-            triggerMouseDown(g_up_canvas, 0, 0);
-            triggerMouseUp(g_up_canvas, 0, 0);
+            if (trigger)
+            {
+                triggerMouseDown(g_up_canvas, 0, 0);
+                triggerMouseUp(g_up_canvas, 0, 0);
+            }
         }
     }, 10);
 };
@@ -943,7 +946,7 @@ const onCanvasMouseDown = e =>
 {
     g_center = getCanvasPoint(e);
     
-    cloneCanvasParams();
+    cloneCanvasParams(false);
 };
 
 const triggerMouseEvent = (node, eventType, params) =>
@@ -1173,13 +1176,14 @@ const onClickShape = e =>
     g_remember_last_button.reset();
     g_pensil_button.click();
 
-    initExtCanvas();
+    initExtCanvas(true);
     highlightButton(g_pensil_button, false);
 
     highlightExtButton(e.target, true);
 };
 
 let g_pensil_button = null;
+let g_compas_button = null;
 let g_selbutton_observer = null;
 let g_delbutton_observer = null;
 
@@ -1206,7 +1210,7 @@ const catchToolbar = (container) =>
             }
 
             g_last_button.set(e.target.id);
-            initExtCanvas();
+            initExtCanvas(false);
         }
         g_remember_last_button.set();
     };
@@ -1241,6 +1245,12 @@ const catchToolbar = (container) =>
                 buttons[i].style.display = "none";
                 buttons[i].id = "catched_toolbutton_zoomout";
             }
+            else if (t == "компас")
+            {
+                g_compas_button = buttons[i];
+                //buttons[i].style.display = "none";
+                buttons[i].id = "catched_toolbutton_compas";
+            }
         }
 
         if (!buttons[i].id)
@@ -1250,6 +1260,24 @@ const catchToolbar = (container) =>
 
         buttons[i].addEventListener("click", catchedButtonClick);
     }
+
+    g_compas_button.addEventListener("click", e =>
+    {
+        setTimeout(() =>
+        {
+            const rect = g_player.getBoundingClientRect();
+            const x = rect.width - 80;
+            const y = 80;
+            triggerMouseDown(g_up_canvas, x, y);
+            triggerMouseUp(g_up_canvas, x, y);
+
+            setTimeout(() =>
+            {
+                triggerMouseDown(g_up_canvas, x, y);
+                triggerMouseUp(g_up_canvas, x, y);
+            }, 100);
+        }, 10);
+    });
 
     const circleButton = document.createElement("button");
     circleButton.className = "sc-bcXHqe sc-hHTYSt sc-dmctIk fMkGtt crcckl video_toolbar_extra_button";
@@ -1313,10 +1341,10 @@ const catchCanvas = (container) =>
 
     g_ext_canvas.className = "video_canvas extra_canvas";
     
-    initExtCanvas();
+    initExtCanvas(true);
 };
 
-const initExtCanvas = () =>
+const initExtCanvas = (trigger) =>
 {
     if (g_ext_canvas)
     {
@@ -1341,7 +1369,7 @@ const initExtCanvas = () =>
             g_ext_canvas.style.display = "none";
         }
 
-        cloneCanvasParams();
+        cloneCanvasParams(trigger);
     }
 };
 
