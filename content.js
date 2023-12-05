@@ -449,6 +449,7 @@ const disableActions = e =>
     return false;
 };
 
+const g_transparent_player = new Flag(false);
 const videoKeyHandler = e =>
 {    
     console.log(`%cVideo hotkeys handler: ${e.keyCode}` , "color: rgb(200,200,200)");
@@ -484,8 +485,36 @@ const videoKeyHandler = e =>
             }
         }
     }
+    else if (e.keyCode == 81)
+    {
+        if (g_player)
+        {
+            if (!g_transparent_player.get())
+            {
+                g_transparent_player.set();
+                g_player.style.opacity = "0.45";
+                g_player.style.pointerEvents = "none";
+            }
+        }
+    }
 
     return false;
+};
+
+const videoKeyUpHandler = e =>
+{    
+    if (e.keyCode == 81)
+    {
+        if (g_player)
+        {
+            if (g_transparent_player.get())
+            {
+                g_player.style.opacity = "";
+                g_player.style.pointerEvents = "";
+                g_transparent_player.reset();
+            }
+        }
+    }
 };
 
 let g_controls_observer = null;
@@ -659,6 +688,7 @@ const catchControlBar = (container) =>
     }
 
     window.addEventListener("keydown", videoKeyHandler, true);
+    window.addEventListener("keyup", videoKeyUpHandler, true);
 };
 
 const removeControlBar = (container) =>
@@ -690,6 +720,7 @@ const removeControlBar = (container) =>
     if (!!g_range_observer) disconnect(g_range_observer);
 
     window.removeEventListener("keydown", videoKeyHandler);
+    window.removeEventListener("keyup", videoKeyUpHandler);
 
     g_buttons.map(b =>
     {
