@@ -491,10 +491,18 @@ const videoKeyHandler = e =>
 let g_controls_observer = null;
 const catchPlayer = (container) =>
 {
+    if (!g_player)
+    {
+        console.log(container);
+        g_player = container;
+    }
+
     g_controls_observer = waitFirstElement(container, ELEMENTS.CONTROLBAR, controlbar =>
     {
         catchControlBar(controlbar);
     });
+
+    catchToolbar(container);
 };
 
 const initProgress = (progress, input) =>
@@ -650,7 +658,6 @@ const catchControlBar = (container) =>
         });
     }
 
-    catchToolbar(g_player);
     window.addEventListener("keydown", videoKeyHandler, true);
 };
 
@@ -658,17 +665,15 @@ const removeControlBar = (container) =>
 {
     console.log("SHOW CONTROLBAR");
     const controlbar = selectElement(container, ELEMENTS.CONTROLBAR);
-    if (!controlbar)
+    if (controlbar)
     {
-        console.log("%cCannot find controlbar in container!", "color: rgb(200,0,0)");
-        return;
+        controlbar.style.display = "";
     }
-
-    controlbar.style.display = "";
 
     if (g_player)
     {
         g_player.style.marginBottom = "";
+        g_player = null;
     }
 
     if (!g_altBar)
