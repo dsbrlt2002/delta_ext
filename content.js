@@ -335,6 +335,16 @@ const ELEMENTS =
     {
         tag: "div",
         className: "elements__GenerateObjectContainer"
+    },
+    ELEMENT_POPOVER:
+    {
+        tag: "div",
+        className: "Popover__PopoverWrapper"
+    },
+    POPOVER_CONTENT:
+    {
+        tag: "div",
+        testId: "modal-content"
     }
 };
 
@@ -1574,6 +1584,41 @@ const initReportDialog = (dialog) =>
     }, 10);
 };
 
+let popover_content_observer = null;
+const catchPopover = (popover) =>
+{
+    console.log("POPOVER DETECTED");
+    popover_content_observer = waitFirstElement(popover, ELEMENTS.POPOVER_CONTENT, content =>
+    {
+        const root_rect = g_root.getBoundingClientRect();
+        const popover_rect = popover.getBoundingClientRect();
+        const maxHeight = Math.min(root_rect.height - popover_rect.y - 140, 512);
+        content.style.maxHeight = maxHeight + "px";
+
+        const rows = content.getElementsByClassName("Row-sc-pepgre-0");
+        for (let i = 0; i < rows.length; i++)
+        {
+            const text = rows[i].innerText;
+            const lines = text.split("\n");
+
+            if (!lines.some(l => l.match(/\d{2}\D\d{7},\s+\d{2}\D\d{7}/)))
+            {
+                rows[i].style.display = "none";
+            }
+        }
+
+        const collapsers = content.getElementsByClassName("elements__Container-sc-2yapsl-1");
+        if (collapsers.length > 1)
+        {
+            const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
+            wrappers[0].click();
+        }
+
+        popover_content_observer = disconnect(popover_content_observer);
+    });
+    
+};
+
 //
 // TODO: optimize number of callbacks through hierarchical observers (detect parent before detect all expecting children)
 //
@@ -1587,3 +1632,5 @@ waitFirstElement(g_root, ELEMENTS.PLAYER, catchPlayer, removeControlBar);
 waitFirstElement(g_root, ELEMENTS.CANVAS, catchCanvas, detachCanvas);
 waitFirstElement(g_root, ELEMENTS.SNAPSHOTS, reorderSnapshots);
 waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
+
+waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover);
