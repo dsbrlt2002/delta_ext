@@ -306,6 +306,32 @@ const ELEMENTS =
         testId: "snapshotsListPanel",
         subtree: true
     },
+    ADD_OBJECT:
+    {
+        tag: "div",
+        className: "elements__SidebarHeader",
+
+        FORM:
+        {
+            tag: "div",
+            testId: "symbol-form"
+        },
+        TYPE_SELECTOR:
+        {
+            tag: "div",
+            testId: "slot-container-HO"
+        },
+        SOURCE_SELECTOR:
+        {
+            tag: "div",
+            testId: "FieldContainer-AD"
+        }
+    },
+    SIDEBAR:
+    {
+        tag: "div",
+        className: "SideBar__SidebarContainer"
+    },
     SNAPSHOTS_LABEL:
     {
         tag: "div",
@@ -1619,6 +1645,77 @@ const catchPopover = (popover) =>
     
 };
 
+let g_object_observer = null;
+const detectSidebar = (sidebar) =>
+{
+    console.log("SIDEBAR DETECTED");
+
+    g_object_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT, header =>
+    {
+        console.log("SIDEBAR HEADSER DETECTED");
+        const text = header.innerText.toLowerCase().trim();
+        if (text.includes("створення об"))
+        {
+            console.log("ADD OBJECT DETECTED");
+            let select_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT.FORM, form =>
+            {
+                console.log("OBJECT FORM LOADED");
+                const selector = selectElement(form, ELEMENTS.ADD_OBJECT.TYPE_SELECTOR);
+                const value_div = selectElement(selector, {tag: "div", className: "singleValue"});
+                const value = value_div.innerText.toLowerCase().trim();
+                if (value.includes("невідомий"))
+                {
+                    console.log("Object type is UNKNOWN");
+                    const field = selector.firstChild.lastChild.lastChild;
+                    triggerMouseDown(field, 10, 10);
+                    setTimeout(() =>
+                    {
+                        const options = selector.firstChild.lastChild.lastChild.firstChild.children;
+                        for (let i = 0; i < options.length; i++)
+                        {
+                            const text = options[i].innerText.toLowerCase().trim();
+                            if (text.includes("ворожий"))
+                            {
+                                options[i].click();
+                            }
+                        }
+                    }, 50);
+                }
+
+                const source = selectElement(form, ELEMENTS.ADD_OBJECT.SOURCE_SELECTOR);
+                const source_div = selectElement(source, {tag: "div", className: "singleValue"});
+                const obj_src = source_div.innerText.toLowerCase().trim();
+                if (obj_src.includes("невизначен"))
+                {
+                    console.log("Object source is UNDEFINED");
+                    const field = source.firstChild.lastChild.lastChild;
+                    triggerMouseDown(field, 10, 10);
+                    setTimeout(() =>
+                    {
+                        const options = source.firstChild.lastChild.lastChild.firstChild.children;
+                        for (let i = 0; i < options.length; i++)
+                        {
+                            const text = options[i].innerText.toLowerCase().trim();
+                            if (text.includes("повітряна"))
+                            {
+                                options[i].click();
+                            }
+                        }
+                    }, 50);
+                }
+
+                disconnect(select_observer);
+            });
+        }
+    });
+};
+
+const removedSidebar = (sidebar) =>
+{
+    console.log("SIDEBAR REMOVED");
+    g_object_observer = disconnect(g_object_observer);
+};
+
 //
 // TODO: optimize number of callbacks through hierarchical observers (detect parent before detect all expecting children)
 //
@@ -1631,6 +1728,7 @@ let nav_observer = waitFirstElement(g_root, ELEMENTS.SNAPSHOTS_BUTTON, node =>
 waitFirstElement(g_root, ELEMENTS.PLAYER, catchPlayer, removeControlBar);
 waitFirstElement(g_root, ELEMENTS.CANVAS, catchCanvas, detachCanvas);
 waitFirstElement(g_root, ELEMENTS.SNAPSHOTS, reorderSnapshots);
+waitFirstElement(g_root, ELEMENTS.SIDEBAR, detectSidebar, removedSidebar);
 waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
 waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover);
