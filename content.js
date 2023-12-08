@@ -306,11 +306,13 @@ const ELEMENTS =
         testId: "snapshotsListPanel",
         subtree: true
     },
-    ADD_OBJECT:
+    SIDEBAR_HEADER:
     {
         tag: "div",
-        className: "elements__SidebarHeader",
-
+        className: "elements__SidebarHeader"
+    },
+    ADD_OBJECT:
+    {
         FORM:
         {
             tag: "div",
@@ -331,6 +333,11 @@ const ELEMENTS =
     {
         tag: "div",
         className: "SideBar__SidebarContainer"
+    },
+    ATTACHMENTS:
+    {
+        tag: "div",
+        testId: "uploaded-attachments-list"
     },
     SNAPSHOTS_LABEL:
     {
@@ -1645,75 +1652,165 @@ const catchPopover = (popover) =>
     
 };
 
+const addObjectDetected = (sidebar) =>
+{
+    console.log("ADD OBJECT DETECTED");
+
+    //
+    // TODO: unify code to set selector value
+    //
+    let select_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT.FORM, form =>
+    {
+        console.log("OBJECT FORM LOADED");
+        const selector = selectElement(form, ELEMENTS.ADD_OBJECT.TYPE_SELECTOR);
+        const value_div = selectElement(selector, {tag: "div", className: "singleValue"});
+        const value = value_div.innerText.toLowerCase().trim();
+        if (value.includes("невідомий"))
+        {
+            console.log("Object type is UNKNOWN");
+            const field = selector.firstChild.lastChild.lastChild;
+            triggerMouseDown(field, 10, 10);
+            setTimeout(() =>
+            {
+                const options = selector.firstChild.lastChild.lastChild.firstChild.children;
+                for (let i = 0; i < options.length; i++)
+                {
+                    const text = options[i].innerText.toLowerCase().trim();
+                    if (text.includes("ворожий"))
+                    {
+                        options[i].click();
+                    }
+                }
+            }, 50);
+        }
+
+        const source = selectElement(form, ELEMENTS.ADD_OBJECT.SOURCE_SELECTOR);
+        const source_div = selectElement(source, {tag: "div", className: "singleValue"});
+        const obj_src = source_div.innerText.toLowerCase().trim();
+        if (obj_src.includes("невизначен"))
+        {
+            console.log("Object source is UNDEFINED");
+            const field = source.firstChild.lastChild.lastChild;
+            triggerMouseDown(field, 10, 10);
+            setTimeout(() =>
+            {
+                const options = source.firstChild.lastChild.lastChild.firstChild.children;
+                for (let i = 0; i < options.length; i++)
+                {
+                    const text = options[i].innerText.toLowerCase().trim();
+                    if (text.includes("повітряна"))
+                    {
+                        options[i].click();
+                    }
+                }
+            }, 50);
+        }
+
+        disconnect(select_observer);
+    });
+};
+
+let g_last_url = "";
+let g_images = null;
+const loadAttachmentsPreview = (url) =>
+{
+    fetch(url)
+        .then((response) => response.json())
+        .then((data) =>
+        {
+            g_images = data;
+
+            g_last_url = url;
+            showAttachmentsPreview();
+        });
+};
+
+const showAttachmentsPreview = () =>
+{
+    if (!!g_sidebar)
+    {
+        const attachments_list = selectElement(g_sidebar, ELEMENTS.ATTACHMENTS);
+        if (!!attachments_list)
+        {
+            const images = attachments_list.getElementsByClassName("elements__FileIconContainer-sc-zge5rm-0");
+            
+            console.log(`Show attachments preview (${images.length})...`);
+            if (images.length > 0 && g_images && g_images.length >= images.length)
+            {
+                const parts = g_last_url.split("/");
+                const objectId = parts[parts.length - 1];
+                for (let i = 0; i < images.length; i++)
+                {
+                    const imageId = g_images[i].id;
+                    const imgUrl = `/storage/attachment/from-object-id/${objectId}?id=${imageId}`;
+
+                    const img = document.createElement("img");
+                    img.className = images[i].className;
+                    img.style.height = "50%";
+                    img.style.width = "50%";
+                    img.setAttribute("src", imgUrl);
+                    
+                    const node = images[i];
+                    node.parentNode.insertBefore(img, node);
+                    node.parentNode.removeChild(node);
+                }
+            }
+        }
+    }
+};
+
+let g_attachments_observer = null;
+const editObjectDetected = (sidebar) =>
+{
+    console.log("EDIT OBJECT DETECTED");
+
+    g_attachments_observer = waitFirstElement(sidebar, ELEMENTS.ATTACHMENTS, list =>
+    {
+        console.log("ATTACHMENTS LIST DETECTED");
+
+        showAttachmentsPreview();
+    });
+};
+
+let g_sidebar = null;
 let g_object_observer = null;
 const detectSidebar = (sidebar) =>
 {
     console.log("SIDEBAR DETECTED");
+    g_sidebar = sidebar;
 
-    g_object_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT, header =>
+    const header = selectElement(sidebar, ELEMENTS.SIDEBAR_HEADER);
+    if (header)
     {
-        console.log("SIDEBAR HEADSER DETECTED");
         const text = header.innerText.toLowerCase().trim();
-        if (text.includes("створення об"))
+        if(text.includes("редагування об"))
         {
-            console.log("ADD OBJECT DETECTED");
-            let select_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT.FORM, form =>
-            {
-                console.log("OBJECT FORM LOADED");
-                const selector = selectElement(form, ELEMENTS.ADD_OBJECT.TYPE_SELECTOR);
-                const value_div = selectElement(selector, {tag: "div", className: "singleValue"});
-                const value = value_div.innerText.toLowerCase().trim();
-                if (value.includes("невідомий"))
-                {
-                    console.log("Object type is UNKNOWN");
-                    const field = selector.firstChild.lastChild.lastChild;
-                    triggerMouseDown(field, 10, 10);
-                    setTimeout(() =>
-                    {
-                        const options = selector.firstChild.lastChild.lastChild.firstChild.children;
-                        for (let i = 0; i < options.length; i++)
-                        {
-                            const text = options[i].innerText.toLowerCase().trim();
-                            if (text.includes("ворожий"))
-                            {
-                                options[i].click();
-                            }
-                        }
-                    }, 50);
-                }
-
-                const source = selectElement(form, ELEMENTS.ADD_OBJECT.SOURCE_SELECTOR);
-                const source_div = selectElement(source, {tag: "div", className: "singleValue"});
-                const obj_src = source_div.innerText.toLowerCase().trim();
-                if (obj_src.includes("невизначен"))
-                {
-                    console.log("Object source is UNDEFINED");
-                    const field = source.firstChild.lastChild.lastChild;
-                    triggerMouseDown(field, 10, 10);
-                    setTimeout(() =>
-                    {
-                        const options = source.firstChild.lastChild.lastChild.firstChild.children;
-                        for (let i = 0; i < options.length; i++)
-                        {
-                            const text = options[i].innerText.toLowerCase().trim();
-                            if (text.includes("повітряна"))
-                            {
-                                options[i].click();
-                            }
-                        }
-                    }, 50);
-                }
-
-                disconnect(select_observer);
-            });
+            editObjectDetected(sidebar);
         }
-    });
+    }
+    else
+    {
+        g_object_observer = waitFirstElement(sidebar, ELEMENTS.SIDEBAR_HEADER, header =>
+        {
+            console.log("SIDEBAR HEADER DETECTED");
+            const text = header.innerText.toLowerCase().trim();
+            if (text.includes("створення об"))
+            {
+                addObjectDetected(sidebar);
+            }
+        });
+    }
 };
 
 const removedSidebar = (sidebar) =>
 {
     console.log("SIDEBAR REMOVED");
     g_object_observer = disconnect(g_object_observer);
+    g_attachments_observer = disconnect(g_attachments_observer);
+
+    g_sidebar = null;
+
+    g_preview_loaded.reset();
 };
 
 //
@@ -1732,3 +1829,24 @@ waitFirstElement(g_root, ELEMENTS.SIDEBAR, detectSidebar, removedSidebar);
 waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
 waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover);
+
+chrome.storage.onChanged.addListener((changes, namespace) =>
+{
+    //console.log(namespace);
+    if (namespace == "session")
+    {
+        for (const key in changes)
+        {
+            if (key == "url")
+            {
+                const url = changes[key].newValue;
+                console.log("URL:" + url);
+
+                if (g_last_url != url)
+                {
+                    loadAttachmentsPreview(url);
+                }
+            }
+        }
+    }
+});
