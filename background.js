@@ -13,4 +13,17 @@ chrome.runtime.onInstalled.addListener((details) =>
         },
         {urls: ["https://delta.mil.gov.ua/api/monitor/objects/attachments/*"]}
     );
+
+    chrome.webRequest.onCompleted.addListener(async args =>
+        {
+            const url = args.url;
+            if (!url.includes("attachments"))
+            {
+                console.log("OBJ: " + url);
+                
+                chrome.storage.session.set({obj: url});
+            }
+        },
+        {urls: ["https://delta.mil.gov.ua/api/monitor/objects/*"]}
+    );
 });

@@ -7,7 +7,6 @@ const disconnect = (observer) =>
 {
     if (!observer)
     {
-        console.error("Disconnect NULL observer!");
         return null;
     }
 
@@ -332,13 +331,15 @@ const ELEMENTS =
     SIDEBAR:
     {
         tag: "div",
-        className: "SideBar__SidebarContainer"
+        className: "SideBar__SidebarContainer",
+
+        ATTACHMENTS:
+        {
+            tag: "div",
+            testId: "uploaded-attachments-list"
+        }
     },
-    ATTACHMENTS:
-    {
-        tag: "div",
-        testId: "uploaded-attachments-list"
-    },
+    
     SNAPSHOTS_LABEL:
     {
         tag: "div",
@@ -374,10 +375,19 @@ const ELEMENTS =
         tag: "div",
         className: "Popover__PopoverWrapper"
     },
-    POPOVER_CONTENT:
+    POPOVER:
     {
-        tag: "div",
-        testId: "modal-content"
+        CONTENT:
+        {
+            tag: "div",
+            testId: "modal-content",
+        },
+        ATTACHMENTS:
+        {
+            tag: "div",
+            testId: "object-popover-attachments-list",
+            subtree: true
+        }
     }
 };
 
@@ -1208,6 +1218,8 @@ function Register (value)
     {
         return (this.get() == val);
     };
+
+    this.data = null;
 }
 
 const highlightButton = (button, highlight) =>
@@ -1618,10 +1630,13 @@ const initReportDialog = (dialog) =>
 };
 
 let popover_content_observer = null;
+let g_popover = null;
 const catchPopover = (popover) =>
 {
     console.log("POPOVER DETECTED");
-    popover_content_observer = waitFirstElement(popover, ELEMENTS.POPOVER_CONTENT, content =>
+    g_popover = popover;
+
+    popover_content_observer = waitFirstElement(popover, ELEMENTS.POPOVER.CONTENT, content =>
     {
         const root_rect = g_root.getBoundingClientRect();
         const popover_rect = popover.getBoundingClientRect();
@@ -1643,6 +1658,14 @@ const catchPopover = (popover) =>
         const collapsers = content.getElementsByClassName("elements__Container-sc-2yapsl-1");
         if (collapsers.length > 1)
         {
+            let obj_attachment_observer = waitFirstElement(content, ELEMENTS.POPOVER.ATTACHMENTS, list =>
+            {
+                console.log("ATTACHMENTS LIST DETECTED");
+
+                showAttachmentsPreview(popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
+                obj_attachment_observer = disconnect(obj_attachment_observer);
+            });
+
             const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
             wrappers[0].click();
         }
@@ -1650,6 +1673,12 @@ const catchPopover = (popover) =>
         popover_content_observer = disconnect(popover_content_observer);
     });
     
+};
+
+const removePopover = () =>
+{
+    console.log("POPOVER REMOVED");
+    g_popover = null;
 };
 
 const addObjectDetected = (sidebar) =>
@@ -1710,53 +1739,122 @@ const addObjectDetected = (sidebar) =>
     });
 };
 
-let g_last_url = "";
-let g_images = null;
-const loadAttachmentsPreview = (url) =>
+const getImageUrl = (url, image) =>
+{
+    const parts = url.split("/");
+    const objectId = parts[parts.length - 1];
+
+    const imageId = image.id;
+    const imgUrl = `/storage/attachment/from-object-id/${objectId}?id=${imageId}`;
+
+    return imgUrl;
+};
+
+const g_last_url = new Register("");
+const g_last_obj = new Register("");
+
+const loadAttachmentsPreview = (url, container, element, register) =>
 {
     fetch(url)
-        .then((response) => response.json())
+        .then(res => res.json())
         .then((data) =>
         {
-            g_images = data;
+            register.data = (data.attachments ? data.attachments : data);
+            register.set(url);
 
-            g_last_url = url;
-            showAttachmentsPreview();
+            showAttachmentsPreview(container, element, register);
         });
 };
 
-const showAttachmentsPreview = () =>
+const getThumbCanvas = () =>
 {
-    if (!!g_sidebar)
+    let c = document.getElementById("thumbnails_canvas");
+    if (!c)
     {
-        const attachments_list = selectElement(g_sidebar, ELEMENTS.ATTACHMENTS);
-        if (!!attachments_list)
-        {
-            const images = attachments_list.getElementsByClassName("elements__FileIconContainer-sc-zge5rm-0");
-            
-            console.log(`Show attachments preview (${images.length})...`);
-            if (images.length > 0 && g_images && g_images.length >= images.length)
-            {
-                const parts = g_last_url.split("/");
-                const objectId = parts[parts.length - 1];
-                for (let i = 0; i < images.length; i++)
-                {
-                    const imageId = g_images[i].id;
-                    const imgUrl = `/storage/attachment/from-object-id/${objectId}?id=${imageId}`;
+        c = document.createElement("canvas");
+        c.id = "thumbnails_canvas";
+        document.body.appendChild(c);
+        c.width = 150;
+        c.height = 100;
+    }
+    return c;
+};
 
-                    const img = document.createElement("img");
-                    img.className = images[i].className;
-                    img.style.height = "50%";
-                    img.style.width = "50%";
-                    img.setAttribute("src", imgUrl);
-                    
-                    const node = images[i];
-                    node.parentNode.insertBefore(img, node);
-                    node.parentNode.removeChild(node);
+const loadImage = (url, image, callback) =>
+{
+    const imgUrl = getImageUrl(url, image);
+    const base64 = localStorage.getItem(imgUrl);
+
+    if (!base64)
+    {
+        const img = new Image();
+        img.onload = e =>
+        {
+            const canvas = getThumbCanvas();
+            const context = canvas.getContext("2d");
+            context.drawImage(e.target, 0, 0, 150, 100);
+
+            canvas.toBlob(blob =>
+            {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob); 
+                reader.onloadend = () =>
+                {
+                    const b64 = reader.result;                
+                    localStorage.setItem(imgUrl, b64);
+                    callback(b64);
                 }
-            }
+            });
+        };
+        img.src = imgUrl;
+    }
+    else
+    {
+        callback(base64);
+    }
+};
+
+const updateAttachmentsList = (attachments_list, register) =>
+{
+    if (!attachments_list)
+    {
+        return;
+    }
+
+    const images = attachments_list.getElementsByClassName("elements__FileIconContainer-sc-zge5rm-0");
+            
+    console.log(`Show attachments preview (${images.length})...`);
+
+    const imgs = register.data || [];
+    if (images.length > 0 && imgs.length >= images.length)
+    {
+        for (let i = 0; i < images.length; i++)
+        {
+            const img = document.createElement("img");
+            img.className = images[i].className;
+            img.style.height = "50%";
+            img.style.width = "50%";
+            loadImage(register.get(), imgs[i], base64 =>
+            {
+                img.setAttribute("src", base64);
+            });
+
+            const node = images[i];
+            node.parentNode.insertBefore(img, node);
+            node.parentNode.removeChild(node);
         }
     }
+};
+
+const showAttachmentsPreview = (container, element, register) =>
+{
+    if (!container)
+    {
+        return;
+    }
+
+    const attachments_list = selectElement(container, element);
+    updateAttachmentsList(attachments_list, register);
 };
 
 let g_attachments_observer = null;
@@ -1764,11 +1862,11 @@ const editObjectDetected = (sidebar) =>
 {
     console.log("EDIT OBJECT DETECTED");
 
-    g_attachments_observer = waitFirstElement(sidebar, ELEMENTS.ATTACHMENTS, list =>
+    g_attachments_observer = waitFirstElement(sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, list =>
     {
         console.log("ATTACHMENTS LIST DETECTED");
 
-        showAttachmentsPreview();
+        showAttachmentsPreview(sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, g_last_url);
     });
 };
 
@@ -1809,8 +1907,6 @@ const removedSidebar = (sidebar) =>
     g_attachments_observer = disconnect(g_attachments_observer);
 
     g_sidebar = null;
-
-    g_preview_loaded.reset();
 };
 
 //
@@ -1828,7 +1924,7 @@ waitFirstElement(g_root, ELEMENTS.SNAPSHOTS, reorderSnapshots);
 waitFirstElement(g_root, ELEMENTS.SIDEBAR, detectSidebar, removedSidebar);
 waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
-waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover);
+waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover, removePopover);
 
 chrome.storage.onChanged.addListener((changes, namespace) =>
 {
@@ -1844,7 +1940,16 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
 
                 if (g_last_url != url)
                 {
-                    loadAttachmentsPreview(url);
+                    loadAttachmentsPreview(url, g_sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, g_last_url);
+                }
+            }
+            else if (key == "obj")
+            {
+                const url = changes[key].newValue;
+                console.log("OBJ:" + url);
+                if (!g_last_obj.eq(url))
+                {
+                    loadAttachmentsPreview(url, g_popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
                 }
             }
         }
