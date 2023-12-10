@@ -7,9 +7,12 @@ chrome.runtime.onInstalled.addListener((details) =>
     chrome.webRequest.onCompleted.addListener(async args =>
         {
             const url = args.url;
-            console.log("URL: " + url);
+            if (args.method == "GET")
+            {
+                console.log("URL: " + url);
             
-            chrome.storage.session.set({url});
+                chrome.storage.session.set({url});
+            }
         },
         {urls: ["https://delta.mil.gov.ua/api/monitor/objects/attachments/*"]}
     );
@@ -17,7 +20,7 @@ chrome.runtime.onInstalled.addListener((details) =>
     chrome.webRequest.onCompleted.addListener(async args =>
         {
             const url = args.url;
-            if (!url.includes("attachments"))
+            if (!url.includes("attachments") && args.method == "GET")
             {
                 console.log("OBJ: " + url);
                 
