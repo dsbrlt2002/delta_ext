@@ -1669,8 +1669,6 @@ const catchPopover = (popover) =>
             const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
             wrappers[0].click();
         }
-
-        popover_content_observer = disconnect(popover_content_observer);
     });
     
 };
@@ -1678,6 +1676,9 @@ const catchPopover = (popover) =>
 const removePopover = () =>
 {
     console.log("POPOVER REMOVED");
+
+    popover_content_observer = disconnect(popover_content_observer);
+    
     g_popover = null;
 };
 
