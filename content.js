@@ -1356,7 +1356,8 @@ const catchToolbar = (container) =>
     {
         setTimeout(() =>
         {
-            const rect = g_player.getBoundingClientRect();
+            const nodes = g_player.getElementsByTagName("video");
+            const rect = nodes[0].getBoundingClientRect();
             const x = rect.width - 80;
             const y = 80;
             triggerMouseDown(g_up_canvas, x, y);
@@ -1833,7 +1834,7 @@ const updateAttachmentsList = (attachments_list, register) =>
         {
             const img = document.createElement("img");
             img.className = images[i].className;
-            img.style.height = "50%";
+            img.style.height = "calc(100% - 12px)";
             img.style.width = "50%";
             loadImage(register.get(), imgs[i], base64 =>
             {
