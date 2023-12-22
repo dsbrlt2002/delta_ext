@@ -415,8 +415,10 @@ const shiftPlayer = (container) =>
     }
 
     g_player = player;
-    g_player.style.marginBottom = "56px";
-    g_player.style.maxHeight = "calc(100% - 72px)";
+    
+    // don't shift player element to avoid height limitation that distract canvas proportions
+    //g_player.style.marginBottom = "56px";
+    //g_player.style.maxHeight = "calc(100% - 72px)";
 
     return g_player;
 };
@@ -1275,6 +1277,7 @@ const onClickShape = e =>
 
 let g_pensil_button = null;
 let g_compas_button = null;
+let g_orientir_button = null;
 let g_selbutton_observer = null;
 let g_delbutton_observer = null;
 
@@ -1341,6 +1344,12 @@ const catchToolbar = (container) =>
                 g_compas_button = buttons[i];
                 //buttons[i].style.display = "none";
                 buttons[i].id = "catched_toolbutton_compas";
+            }
+            else if (t == "орієнтир")
+            {
+                g_orientir_button = buttons[i];
+                buttons[i].style.display = "none";
+                buttons[i].id = "catched_toolbutton_orientir";
             }
         }
 
