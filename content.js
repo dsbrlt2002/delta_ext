@@ -1600,6 +1600,40 @@ const reorderSnapshots = (node) =>
     }
 };
 
+const setReportDescription = (input) =>
+{
+    const wc = document.getElementById("widgetContainer");
+    const elements = wc.getElementsByClassName("components__ArcgisWidgetsPortalContainer-sc-ugnmab-7");
+    const pane = elements[0];
+    const fields = pane.getElementsByClassName("elements__ControlCounter-sc-10hkpvi-2");
+    const field = fields[0];
+
+    const text = field.innerText;
+    const parts = text.split(":");
+    const count = parseInt(parts[1]);
+
+    let nFlights = parseInt(count / 7);
+    const mod = count - nFlights * 7;
+    if (mod > 4)
+    {
+        nFlights++;
+    }
+    if (nFlights < 1)
+    {
+        nFlights = 1;
+    }
+
+    const shift = parseInt(20 * Math.random() - 10);
+    const duration = nFlights * (100 + shift);
+
+    let descr = "Вильотів: " + nFlights + "\nчас в повітрі: " + duration + " хв.\nцілей виявлено/підтвердж.: " + count;
+
+    input.focus();
+    input.value = descr;
+    triggerInputEvent(input, descr);
+
+};
+
 const initReportDialog = (dialog) =>
 {
     console.log("REPORT DIALOG DETECTED");
@@ -1637,6 +1671,9 @@ const initReportDialog = (dialog) =>
             }
         }
     }, 10);
+
+    const descr_input = dialog.querySelector("textarea[name=description]");
+    setReportDescription(descr_input);
 };
 
 let popover_content_observer = null;
