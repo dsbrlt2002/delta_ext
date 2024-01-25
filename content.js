@@ -326,6 +326,16 @@ const ELEMENTS =
         {
             tag: "div",
             testId: "FieldContainer-AD"
+        },
+        OBJECT_TYPE:
+        {
+            tag: "div",
+            testId: "app6d-type-button"
+        },
+        OBJECT_LABEL:
+        {
+            tag: "span",
+            testId: "symbol-type-label"
         }
     },
     SIDEBAR:
@@ -1729,6 +1739,11 @@ const removePopover = () =>
     g_popover = null;
 };
 
+const OBJECT_NAME_TABLE_BY_LABEL =
+{
+    "Важка гаубиця": "Гармата"
+};
+
 const addObjectDetected = (sidebar) =>
 {
     console.log("ADD OBJECT DETECTED");
@@ -1781,6 +1796,30 @@ const addObjectDetected = (sidebar) =>
                     }
                 }
             }, 50);
+        }
+
+        const object_type = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_TYPE);
+        let name_input = null;
+        if (object_type)
+        {
+            const object_label = selectElement(object_type, ELEMENTS.ADD_OBJECT.OBJECT_LABEL);
+            if (object_label)
+            {
+                const label_text = object_label.innerText;
+                const name = OBJECT_NAME_TABLE_BY_LABEL[label_text];
+                if (!!name)
+                {
+                    const name_inputs = form.getElementsByClassName("input___5IFpI");
+                    if (name_inputs.length > 0)
+                    {
+                        const input = name_inputs[0];
+                        input.focus();
+                        input.value = name;
+                        triggerInputEvent(input, name);
+                        name_input = input;
+                    }
+                }
+            }
         }
 
         disconnect(select_observer);
@@ -1862,9 +1901,10 @@ const loadImage = (url, image, callback) =>
     }
 };
 
+const g_update_attachments_list = new Flag(false);
 const updateAttachmentsList = (attachments_list, register) =>
 {
-    if (!attachments_list)
+    if (!attachments_list || !g_update_attachments_list.get())
     {
         return;
     }
@@ -1957,6 +1997,42 @@ const removedSidebar = (sidebar) =>
     g_sidebar = null;
 };
 
+
+const patchAttachmentsPreview = () =>
+{
+    g_update_attachments_list.set();
+
+    chrome.storage.onChanged.addListener((changes, namespace) =>
+    {
+        //console.log(namespace);
+        if (namespace == "session")
+        {
+            for (const key in changes)
+            {
+                if (key == "url")
+                {
+                    const url = changes[key].newValue;
+                    console.log("URL:" + url);
+
+                    if (g_last_url != url)
+                    {
+                        loadAttachmentsPreview(url, g_sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, g_last_url);
+                    }
+                }
+                else if (key == "obj")
+                {
+                    const url = changes[key].newValue;
+                    console.log("OBJ:" + url);
+                    if (!g_last_obj.eq(url))
+                    {
+                        loadAttachmentsPreview(url, g_popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
+                    }
+                }
+            }
+        }
+    });
+};
+
 //
 // TODO: optimize number of callbacks through hierarchical observers (detect parent before detect all expecting children)
 //
@@ -1974,32 +2050,4 @@ waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
 waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover, removePopover);
 
-chrome.storage.onChanged.addListener((changes, namespace) =>
-{
-    //console.log(namespace);
-    if (namespace == "session")
-    {
-        for (const key in changes)
-        {
-            if (key == "url")
-            {
-                const url = changes[key].newValue;
-                console.log("URL:" + url);
-
-                if (g_last_url != url)
-                {
-                    loadAttachmentsPreview(url, g_sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, g_last_url);
-                }
-            }
-            else if (key == "obj")
-            {
-                const url = changes[key].newValue;
-                console.log("OBJ:" + url);
-                if (!g_last_obj.eq(url))
-                {
-                    loadAttachmentsPreview(url, g_popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
-                }
-            }
-        }
-    }
-});
+//patchAttachmentsPreview();
