@@ -31,7 +31,7 @@ const disconnect = (observer) =>
     return null;
 };
 
-const availableNodes = ["div", "span", "li", "button"];
+const availableNodes = ["div", "span", "li", "button", "ul"];
 const inputNodes = ["input", "select", "textarea"];
 
 const checkElement = (node, element) =>
@@ -192,6 +192,10 @@ const waitFirstElement = (parentNode, element, callback, detached, modified) =>
                 if (typeof(callback) == "function" &&
                     m.addedNodes && m.addedNodes.length > 0)
                 {
+                    if (element.title == "зберегти")
+                    {
+                        const a = 0;
+                    }
                     const node = checkFirstNode(m.addedNodes, element);
                     if (!!node)
                     {
@@ -374,6 +378,12 @@ const ELEMENTS =
     {
         tag: "button",
         title: "видалити"
+    },
+    SAVE_BUTTON:
+    {
+        tag: "button",
+        title: "зберегти",
+        subtree: true
     },
     REPORT_DIALOG:
     {
@@ -587,7 +597,7 @@ const catchPlayer = (container) =>
 {
     if (!g_player)
     {
-        console.log(container);
+        //console.log(container);
         g_player = container;
     }
 
@@ -1288,8 +1298,12 @@ const onClickShape = e =>
 let g_pensil_button = null;
 let g_compas_button = null;
 let g_orientir_button = null;
+let g_save_button = null;
+let g_copy_button = null;
+
 let g_selbutton_observer = null;
 let g_delbutton_observer = null;
+let g_savebutton_observer = null;
 
 const catchToolbar = (container) =>
 {
@@ -1418,10 +1432,32 @@ const catchToolbar = (container) =>
         console.log("DELETE button detected");
         catchButton(button, "catched_toolbutton_delete");
     });
-
+    
     toolbar.appendChild(circleButton);
     toolbar.appendChild(rhombButton);
     toolbar.appendChild(triangleButton);
+
+    g_savebutton_observer = waitFirstElement(toolbar, ELEMENTS.SAVE_BUTTON, catched_element =>
+    {
+        console.log("SAVE button detected");
+
+        const save_buttons = catched_element.getElementsByTagName("button");
+        if (save_buttons.length > 0)
+        {
+            g_save_button = save_buttons[0];
+            g_save_button.id = "catched_toolbutton_save";
+            
+            const ul = g_save_button.nextSibling;
+            ul.style.display = "none";
+
+            const g_copy_button = save_buttons[save_buttons.length - 1];
+            g_save_button.addEventListener("click", e =>
+            {
+                console.log("COPY IMAGE emulate click");
+                g_copy_button.click();
+            });
+        }
+    });
 };
 
 const catchCanvas = (container) =>
@@ -1508,6 +1544,7 @@ const detachToolbar = () =>
 
     g_selbutton_observer = disconnect(g_selbutton_observer);
     g_delbutton_observer = disconnect(g_delbutton_observer);
+    g_savebutton_observer = disconnect(g_savebutton_observer);
 };
 
 const hideTooltip = (tooltip) =>
