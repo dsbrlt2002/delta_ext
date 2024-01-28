@@ -1187,7 +1187,10 @@ const buildRhomb = (x, y, x0, y0, r) =>
     console.log(`%cEmulate rhomb: X=${x}, Y=${y}, R=${r}`, "color: rgb(200,200,200");
 
     const rhomb = getRhomb(x, y, x0, y0, r);
-    return buildPath(rhomb, true);
+    const shape = buildPath(rhomb, true);
+
+    shape.type = "rhomb";
+    return shape;
 };
 
 const buildTriangle = (x, y, x0, y0, r) =>
@@ -1198,6 +1201,7 @@ const buildTriangle = (x, y, x0, y0, r) =>
     return buildPath(triangle, true);
 };
 
+let g_rhomb_count = 0;
 const emulateShape = (node, points) =>
 {
     if (points.length <= 0)
@@ -1212,6 +1216,11 @@ const emulateShape = (node, points) =>
     }
     const last =  points[points.length - 1];
     triggerMouseUp(node, last.x, last.y);
+
+    if (points.type == "rhomb")
+    {
+        g_rhomb_count++;
+    }
 };
 
 function Flag (value)
@@ -1499,6 +1508,7 @@ const catchCanvas = (container) =>
     g_ext_canvas.className = "video_canvas extra_canvas";
     
     initExtCanvas(true);
+    g_rhomb_count = 0;
 };
 
 const initExtCanvas = (trigger) =>
@@ -1882,8 +1892,9 @@ const addObjectDetected = (sidebar) =>
             {
                 const input = inputs[0];
                 input.focus();
-                input.value = "1";
-                triggerInputEvent(input, "1");
+                const val = g_rhomb_count;
+                input.value = val;
+                triggerInputEvent(input, val);
             }
         }
 
@@ -1893,7 +1904,11 @@ const addObjectDetected = (sidebar) =>
             if (!!close_button)
             {
                 const expand_button = close_button.previousSibling;
-                expand_button.click();
+                const title = expand_button.getAttribute("title");
+                if (title == "Збільшити")
+                {
+                    expand_button.click();
+                }
             }
         }
 
