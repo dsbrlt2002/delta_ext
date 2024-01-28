@@ -340,6 +340,16 @@ const ELEMENTS =
         {
             tag: "span",
             testId: "symbol-type-label"
+        },
+        OBJECT_DATETIME: 
+        {
+            tag: "div",
+            testId: "FieldContainer-W"
+        },
+        OBJECT_COUNT:
+        {
+            tag: "div",
+            testId: "FieldContainer-C"
         }
     },
     SIDEBAR:
@@ -1778,7 +1788,12 @@ const removePopover = () =>
 
 const OBJECT_NAME_TABLE_BY_LABEL =
 {
-    "Важка гаубиця": "Гармата"
+    "Важка гаубиця": "Гармата",
+    "Автомобіль загального призначення": "АТ",
+    "Вантажівка (транспортний засіб підвищеної прохідності)": "ВАТ",
+    "Бойова броньована машина (ББМ, БМП)": "ББМ",
+    "Сухопутне озброєння та військова техніка": "Замаскована ВТ",
+    "Сухопутний підрозділ": "Зосередження ВТ та о/с"
 };
 
 const addObjectDetected = (sidebar) =>
@@ -1836,13 +1851,14 @@ const addObjectDetected = (sidebar) =>
         }
 
         const object_type = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_TYPE);
-        let name_input = null;
         if (object_type)
         {
             const object_label = selectElement(object_type, ELEMENTS.ADD_OBJECT.OBJECT_LABEL);
             if (object_label)
             {
                 const label_text = object_label.innerText;
+                console.log(label_text);
+
                 const name = OBJECT_NAME_TABLE_BY_LABEL[label_text];
                 if (!!name)
                 {
@@ -1853,10 +1869,77 @@ const addObjectDetected = (sidebar) =>
                         input.focus();
                         input.value = name;
                         triggerInputEvent(input, name);
-                        name_input = input;
                     }
                 }
             }
+        }
+
+        const object_count_field = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_COUNT);
+        if (!!object_count_field)
+        {
+            const inputs = object_count_field.getElementsByTagName("input");
+            if (inputs.length > 0)
+            {
+                const input = inputs[0];
+                input.focus();
+                input.value = "1";
+                triggerInputEvent(input, "1");
+            }
+        }
+
+        if (!!g_player)
+        {
+            const close_button = g_player.querySelector("button[title='Закрити']");
+            if (!!close_button)
+            {
+                const expand_button = close_button.previousSibling;
+                expand_button.click();
+            }
+        }
+
+        const date_elements = sidebar.getElementsByClassName("react-datepicker__input-container");
+        if (date_elements.length > 0)
+        {
+            const object_datepicker = date_elements[0];
+            const inputs = object_datepicker.getElementsByTagName("input");
+            if (inputs.length > 0)
+            {
+                const object_date_input = inputs[0];
+                object_date_input.focus();
+                setTimeout(() =>
+                {
+                    const popover_elements = sidebar.getElementsByClassName("react-datepicker-popper");
+                    if (popover_elements.length > 0)
+                    {
+                        const object_datepicker_popover = popover_elements[0];
+                        const buttons = object_datepicker_popover.getElementsByTagName("button");
+                        if (buttons.length > 0)
+                        {
+                            const object_now_button = buttons[buttons.length - 1];
+                            object_now_button.click();
+                        }
+                    }
+
+                    setTimeout(() =>
+                    {
+                        const date_time_field = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_DATETIME);
+                        if (date_time_field)
+                        {
+                            const time_fields = date_time_field.getElementsByClassName("timePickerContainer");
+                            if (time_fields.length > 0)
+                            {
+                                const time_field = time_fields[0];
+                                const time_inputs = time_field.getElementsByTagName("input");
+                                if (time_inputs.length > 0)
+                                {
+                                    const time_input = time_inputs[0];
+                                    time_input.focus();
+                                }
+                            }
+                        }
+                    }, 100);
+                }, 100);
+            } 
         }
 
         disconnect(select_observer);
