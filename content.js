@@ -341,6 +341,11 @@ const ELEMENTS =
             tag: "span",
             testId: "symbol-type-label"
         },
+        OBJECT_NAME:
+        {
+            tag: "input",
+            testId: "T"
+        },
         OBJECT_DATETIME: 
         {
             tag: "div",
@@ -1872,10 +1877,11 @@ const addObjectDetected = (sidebar) =>
                 const name = OBJECT_NAME_TABLE_BY_LABEL[label_text];
                 if (!!name)
                 {
-                    const name_inputs = form.getElementsByClassName("input___5IFpI");
-                    if (name_inputs.length > 0)
+                    const input = selectElement(form, ELEMENTS.ADD_OBJECT.OBJECT_NAME)
+                    if (input)
                     {
-                        const input = name_inputs[0];
+                        console.log("Object name: " + name);
+
                         input.focus();
                         input.value = name;
                         triggerInputEvent(input, name);
@@ -1892,7 +1898,7 @@ const addObjectDetected = (sidebar) =>
             {
                 const input = inputs[0];
                 input.focus();
-                const val = g_rhomb_count;
+                const val = Math.max(1, g_rhomb_count);
                 input.value = val;
                 triggerInputEvent(input, val);
             }
