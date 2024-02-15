@@ -192,7 +192,7 @@ const waitFirstElement = (parentNode, element, callback, detached, modified) =>
                 if (typeof(callback) == "function" &&
                     m.addedNodes && m.addedNodes.length > 0)
                 {
-                    if (element.title == "зберегти")
+                    if (element.className == "elements__SidebarHeader")
                     {
                         const a = 0;
                     }
@@ -2114,19 +2114,21 @@ const detectSidebar = (sidebar) =>
         {
             editObjectDetected(sidebar);
         }
-    }
-    else
-    {
-        g_object_observer = waitFirstElement(sidebar, ELEMENTS.SIDEBAR_HEADER, header =>
+        else if (text.includes("створення об"))
         {
-            console.log("SIDEBAR HEADER DETECTED");
-            const text = header.innerText.toLowerCase().trim();
-            if (text.includes("створення об"))
-            {
-                addObjectDetected(sidebar);
-            }
-        });
+            addObjectDetected(sidebar);
+        }
     }
+    
+    g_object_observer = waitFirstElement(sidebar, ELEMENTS.SIDEBAR_HEADER, header =>
+    {
+        console.log("SIDEBAR HEADER DETECTED");
+        const text = header.innerText.toLowerCase().trim();
+        if (text.includes("створення об"))
+        {
+            addObjectDetected(sidebar);
+        }
+    });
 };
 
 const removedSidebar = (sidebar) =>
