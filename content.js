@@ -360,7 +360,7 @@ const ELEMENTS =
     SIDEBAR:
     {
         tag: "div",
-        className: "SideBar__SidebarContainer",
+        className: "SideBar__SidebarContent",
 
         ATTACHMENTS:
         {
@@ -1675,11 +1675,9 @@ const reorderSnapshots = (node) =>
 const setReportDescription = (input) =>
 {
     const wc = document.getElementById("widgetContainer");
-    const elements = wc.getElementsByClassName("components__ArcgisWidgetsPortalContainer-sc-ugnmab-7");
-    const pane = elements[0];
-    const fields = pane.getElementsByClassName("elements__ControlCounter-sc-10hkpvi-2");
+    const fields = wc.getElementsByClassName("elements__ControlCounter-sc-1w1ryg9-2");
     const field = fields[0];
-
+    
     const text = field.innerText;
     const parts = text.split(":");
     const count = parseInt(parts[1]);
@@ -1699,7 +1697,6 @@ const setReportDescription = (input) =>
     const duration = nFlights * (100 + shift);
 
     let descr = "Вильотів: " + nFlights + "\nчас в повітрі: " + duration + " хв.\nцілей виявлено/підтвердж.: " + count;
-
     input.focus();
     input.value = descr;
     triggerInputEvent(input, descr);
