@@ -36,7 +36,7 @@ const inputNodes = ["input", "select", "textarea"];
 
 const checkElement = (node, element) =>
 {
-    if (element.className && node.className.includes(element.className))
+    if (!!element.className && node.className.includes(element.className))
     {
         return true;
     }
@@ -118,6 +118,33 @@ const selectElement = (node, element) =>
     }
 
     return selectSubelement(node, element);
+};
+
+const selectAllElements = (node, element, firstLevelChild) =>
+{
+    if (!node)
+    {
+        throw new Error("Illegal NODE for selection"); 
+    }
+
+    if (!!element["tag"])
+    {
+        const elements = node.getElementsByTagName(element.tag);
+        const result = [];
+        for (let i = 0; i < elements.length; i++)
+        {
+            if (!firstLevelChild || node === element.parentNode)
+            {
+                if (checkElement(elements[i], element))
+                {
+                    result.push(elements[i]);
+                }
+            }
+        }
+        return result;
+    }
+    console.log(element);
+    throw new Error("Illegal element PATTERN for selection");
 };
 
 const waitAttribute = (parentNode, name, value, callback) =>
@@ -405,23 +432,43 @@ const ELEMENTS =
         tag: "div",
         className: "elements__GenerateObjectContainer"
     },
-    ELEMENT_POPOVER:
+    ELEMENT_POPOVER_AREA:
     {
         tag: "div",
-        className: "Popover__PopoverWrapper"
-    },
-    POPOVER:
-    {
+        className: "Popover__PopoverDragArea",
         CONTENT:
         {
             tag: "div",
-            testId: "modal-content",
+            className: "elements__PassportContainer-sc"
+        }
+    },
+    POPOVER:
+    {
+        CONTAINER:
+        {
+            tag: "div",
+            className: "elements__PassportContainer-sc"
+        },
+        CONTENT:
+        {
+            tag: "div",
+            className: "BattleSpaceObjectPassport__PassportContent"
         },
         ATTACHMENTS:
         {
             tag: "div",
             testId: "object-popover-attachments-list",
             subtree: true
+        },
+        TABLE:
+        {
+            tag: "div",
+            className: "elements__Table-sc"
+        },
+        ROW:
+        {
+            tag: "div",
+            className: "elements__TableRowContainer"
         }
     }
 };
@@ -1747,44 +1794,61 @@ const initReportDialog = (dialog) =>
 
 let popover_content_observer = null;
 let g_popover = null;
-const catchPopover = (popover) =>
+const catchPopover = (area) =>
 {
     console.log("POPOVER DETECTED");
+    const popover = selectElement(area, ELEMENTS.ELEMENT_POPOVER_AREA.CONTENT);
     g_popover = popover;
 
     popover_content_observer = waitFirstElement(popover, ELEMENTS.POPOVER.CONTENT, content =>
     {
+        console.log("POPOVER CONTENT DETECTED");
+
+        const container = selectElement(popover, ELEMENTS.POPOVER.CONTAINER);
+        
         const root_rect = g_root.getBoundingClientRect();
         const popover_rect = popover.getBoundingClientRect();
-        const maxHeight = Math.min(root_rect.height - popover_rect.y - 140, 512);
-        content.style.maxHeight = maxHeight + "px";
+        const maxHeight = Math.min(root_rect.height - popover_rect.y - 140, 800);
+        container.style.maxHeight = maxHeight + "px";
 
-        const rows = content.getElementsByClassName("Row-sc-pepgre-0");
+        const firstTable = selectElement(content, ELEMENTS.POPOVER.TABLE);
+        const rows = selectAllElements(firstTable, ELEMENTS.POPOVER.ROW);
+        let sk_location = null;
         for (let i = 0; i < rows.length; i++)
         {
             const text = rows[i].innerText;
             const lines = text.split("\n");
 
-            if (!lines.some(l => l.match(/\d{2}\D\d{7},\s+\d{2}\D\d{7}/)))
+            if (lines.some(l => l.match(/\d{2}\D\d{7},\s+\d{2}\D\d{7}/)))
             {
-                rows[i].style.display = "none";
+                sk_location = lines[lines.length - 1];
+            }
+        }
+        firstTable.style.display = "none";
+
+        if (!!sk_location)
+        {
+            const el_current_location = g_root.querySelector("div[data-testid=current-location]");
+            if (!!el_current_location)
+            {
+                el_current_location.innerHTML = sk_location;
             }
         }
 
-        const collapsers = content.getElementsByClassName("elements__Container-sc-2yapsl-1");
-        if (collapsers.length > 1)
-        {
-            let obj_attachment_observer = waitFirstElement(content, ELEMENTS.POPOVER.ATTACHMENTS, list =>
-            {
-                console.log("ATTACHMENTS LIST DETECTED");
+        // const collapsers = content.getElementsByClassName("elements__Container-sc-2yapsl-1");
+        // if (collapsers.length > 1)
+        // {
+        //     let obj_attachment_observer = waitFirstElement(content, ELEMENTS.POPOVER.ATTACHMENTS, list =>
+        //     {
+        //         console.log("ATTACHMENTS LIST DETECTED");
 
-                showAttachmentsPreview(popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
-                obj_attachment_observer = disconnect(obj_attachment_observer);
-            });
+        //         showAttachmentsPreview(popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
+        //         obj_attachment_observer = disconnect(obj_attachment_observer);
+        //     });
 
-            const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
-            wrappers[0].click();
-        }
+        //     const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
+        //     wrappers[0].click();
+        // }
     });
     
 };
@@ -2188,6 +2252,6 @@ waitFirstElement(g_root, ELEMENTS.SNAPSHOTS, reorderSnapshots);
 waitFirstElement(g_root, ELEMENTS.SIDEBAR, detectSidebar, removedSidebar);
 waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
-waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER, catchPopover, removePopover);
+waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER_AREA, catchPopover, removePopover);
 
 //patchAttachmentsPreview();
