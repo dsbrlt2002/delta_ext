@@ -1,7 +1,7 @@
 const g_observers = [];
 const CANVAS_RATIO = 1.5;
 
-const SHOWN_ICON_BASE64 = "PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMy42ODggMTJhMTUuNjM0IDE1LjYzNCAwIDAgMCAyLjA4OCAyLjgyYzEuNSAxLjYgMy42MDcgMy4wOTcgNi4yMjQgMy4wOTdzNC43MjQtMS40OTcgNi4yMjMtMy4wOTdBMTUuNjQgMTUuNjQgMCAwIDAgMjAuMzEyIDEyYTE0LjE5NiAxNC4xOTYgMCAwIDAtLjM4OC0uNjM1IDE1LjY0IDE1LjY0IDAgMCAwLTEuNy0yLjE4NWMtMS41LTEuNi0zLjYwNy0zLjA5Ny02LjIyNC0zLjA5N1M3LjI3NiA3LjU4IDUuNzc2IDkuMThhMTUuNjQyIDE1LjY0MiAwIDAgMC0xLjcwMSAyLjE4NSAxNC4xOCAxNC4xOCAwIDAgMC0uMzg4LjYzNVptMTguMTQ5LS4zMzYtLjAwMS0uMDAyLS4wMDMtLjAwNi0uMDEtLjAxOGExMC4xNTIgMTAuMTUyIDAgMCAwLS4xNTgtLjI5MiAxNy4xNTMgMTcuMTUzIDAgMCAwLTIuMzQ4LTMuMTkyQzE3LjY5MyA2LjQyIDE1LjIxNyA0LjU4NCAxMiA0LjU4NGMtMy4yMTcgMC01LjY5MyAxLjgzNi03LjMxOCAzLjU3YTE3LjE0IDE3LjE0IDAgMCAwLTIuMzQ4IDMuMTkyIDEwLjA2MyAxMC4wNjMgMCAwIDAtLjE1OC4yOTJsLS4wMS4wMTgtLjAwMi4wMDYtLjAwMS4wMDFzMCAuMDAyLjY3LjMzN2wtLjY3LS4zMzVhLjc1Ljc1IDAgMCAwIDAgLjY3bC42Ny0uMzM1LS42Ny4zMzZ2LjAwMmwuMDA0LjAwNi4wMDkuMDE4YTEwLjI4NiAxMC4yODYgMCAwIDAgLjE1OC4yOTIgMTcuMTQ5IDE3LjE0OSAwIDAgMCAyLjM0OCAzLjE5MmMxLjYyNSAxLjczNCA0LjEwMSAzLjU3IDcuMzE4IDMuNTcgMy4yMTYgMCA1LjY5Mi0xLjgzNiA3LjMxOC0zLjU3YTE3LjE0NyAxNy4xNDcgMCAwIDAgMi4zNDctMy4xOTIgMTAuMzggMTAuMzggMCAwIDAgLjE1OS0uMjkybC4wMDktLjAxOC4wMDMtLjAwNXYtLjY3NVptMCAuNjcxYS43NTEuNzUxIDAgMCAwIDAtLjY3di42N1oiIGNsaXAtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTguNzUgMTJhMy4yNSAzLjI1IDAgMSAxIDYuNSAwIDMuMjUgMy4yNSAwIDAgMS02LjUgMFoiIGNsaXAtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPg==";
+const SHOWN_ICON_BASE64 = "PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMy42ODggMTJhMTUuNjM0IDE1LjYzNCAwIDAgMCAyLjA4OSAyLjgyYzEuNDk4IDEuNiAzLjYwNiAzLjA5NyA2LjIyMyAzLjA5N3M0LjcyNC0xLjQ5NyA2LjIyMy0zLjA5N0ExNS42IDE1LjYgMCAwIDAgMjAuMzEyIDEyYTE0IDE0IDAgMCAwLS4zODgtLjYzNSAxNS42IDE1LjYgMCAwIDAtMS43LTIuMTg1Yy0xLjUtMS42LTMuNjA3LTMuMDk3LTYuMjI0LTMuMDk3UzcuMjc2IDcuNTggNS43NzYgOS4xOGExNS42IDE1LjYgMCAwIDAtMS43MDEgMi4xODUgMTQgMTQgMCAwIDAtLjM4OC42MzVtMTguMTQ5LS4zMzYtLjAwMS0uMDAyLS4wMDMtLjAwNi0uMDEtLjAxOGExMCAxMCAwIDAgMC0uMTU4LS4yOTIgMTcuMTUzIDE3LjE1MyAwIDAgMC0yLjM0OC0zLjE5MkMxNy42OTMgNi40MiAxNS4yMTcgNC41ODQgMTIgNC41ODRTNi4zMDcgNi40MiA0LjY4MiA4LjE1M2ExNyAxNyAwIDAgMC0yLjM0OCAzLjE5MiAxMCAxMCAwIDAgMC0uMTU4LjI5MmwtLjAxLjAxOC0uMDAyLjAwNi0uMDAxLjAwMXMwIC4wMDIuNjcuMzM3bC0uNjctLjMzNWEuNzUuNzUgMCAwIDAgMCAuNjdsLjY3LS4zMzUtLjY3LjMzNnYuMDAybC4wMDQuMDA2LjAwOS4wMThhMTAgMTAgMCAwIDAgLjE1OC4yOTIgMTcuMTQ5IDE3LjE0OSAwIDAgMCAyLjM0OCAzLjE5MmMxLjYyNSAxLjczNCA0LjEwMSAzLjU3IDcuMzE4IDMuNTdzNS42OTItMS44MzYgNy4zMTgtMy41N2ExNyAxNyAwIDAgMCAyLjM0Ny0zLjE5MiAxMCAxMCAwIDAgMCAuMTU5LS4yOTJsLjAwOS0uMDE4LjAwMy0uMDA1di0uNjc1bTAgLjY3MWEuNzUuNzUgMCAwIDAgMC0uNjd6IiBjbGlwLXJ1bGU9ImV2ZW5vZGQiPjwvcGF0aD48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik04Ljc1IDEyYTMuMjUgMy4yNSAwIDEgMSA2LjUgMCAzLjI1IDMuMjUgMCAwIDEtNi41IDAiIGNsaXAtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPg==";
 
 const disconnect = (observer) =>
 {
@@ -1644,6 +1644,8 @@ const hideFirstSnapshot = (list) =>
         {
             const svg = icons[0];
             const icon_base64 = btoa(svg.innerHTML);
+            
+            //it's so dumb to define it by icon... but Delta
             if (icon_base64 == SHOWN_ICON_BASE64)
             {
                 first_snapshot.click();
@@ -1793,64 +1795,52 @@ const initReportDialog = (dialog) =>
 };
 
 let popover_content_observer = null;
+let popover_area_observer = null;
 let g_popover = null;
+
+const waitPopoverContent = content =>
+{
+    console.log("POPOVER CONTENT DETECTED");
+
+    const container = selectElement(g_popover, ELEMENTS.POPOVER.CONTAINER);
+    
+    const root_rect = g_root.getBoundingClientRect();
+    const popover_rect = g_popover.getBoundingClientRect();
+    const maxHeight = Math.min(root_rect.height - popover_rect.y - 140, 800);
+    container.style.maxHeight = maxHeight + "px";
+
+    const firstTable = selectElement(content, ELEMENTS.POPOVER.TABLE);
+    const rows = selectAllElements(firstTable, ELEMENTS.POPOVER.ROW);
+    let sk_location = null;
+    for (let i = 0; i < rows.length; i++)
+    {
+        const text = rows[i].innerText;
+        const lines = text.split("\n");
+
+        if (lines.some(l => l.match(/\d{2}\D\d{7},\s+\d{2}\D\d{7}/)))
+        {
+            sk_location = lines[lines.length - 1];
+        }
+    }
+    firstTable.style.display = "none";
+
+    if (!!sk_location)
+    {
+        const el_current_location = g_root.querySelector("div[data-testid=current-location]");
+        if (!!el_current_location)
+        {
+            el_current_location.innerHTML = sk_location;
+        }
+    }
+};
+
 const catchPopover = (area) =>
 {
     console.log("POPOVER DETECTED");
-    const popover = selectElement(area, ELEMENTS.ELEMENT_POPOVER_AREA.CONTENT);
-    g_popover = popover;
+    //const popover = selectElement(area, ELEMENTS.ELEMENT_POPOVER_AREA.CONTENT);
+    g_popover = area;
 
-    popover_content_observer = waitFirstElement(popover, ELEMENTS.POPOVER.CONTENT, content =>
-    {
-        console.log("POPOVER CONTENT DETECTED");
-
-        const container = selectElement(popover, ELEMENTS.POPOVER.CONTAINER);
-        
-        const root_rect = g_root.getBoundingClientRect();
-        const popover_rect = popover.getBoundingClientRect();
-        const maxHeight = Math.min(root_rect.height - popover_rect.y - 140, 800);
-        container.style.maxHeight = maxHeight + "px";
-
-        const firstTable = selectElement(content, ELEMENTS.POPOVER.TABLE);
-        const rows = selectAllElements(firstTable, ELEMENTS.POPOVER.ROW);
-        let sk_location = null;
-        for (let i = 0; i < rows.length; i++)
-        {
-            const text = rows[i].innerText;
-            const lines = text.split("\n");
-
-            if (lines.some(l => l.match(/\d{2}\D\d{7},\s+\d{2}\D\d{7}/)))
-            {
-                sk_location = lines[lines.length - 1];
-            }
-        }
-        firstTable.style.display = "none";
-
-        if (!!sk_location)
-        {
-            const el_current_location = g_root.querySelector("div[data-testid=current-location]");
-            if (!!el_current_location)
-            {
-                el_current_location.innerHTML = sk_location;
-            }
-        }
-
-        // const collapsers = content.getElementsByClassName("elements__Container-sc-2yapsl-1");
-        // if (collapsers.length > 1)
-        // {
-        //     let obj_attachment_observer = waitFirstElement(content, ELEMENTS.POPOVER.ATTACHMENTS, list =>
-        //     {
-        //         console.log("ATTACHMENTS LIST DETECTED");
-
-        //         showAttachmentsPreview(popover, ELEMENTS.POPOVER.ATTACHMENTS, g_last_obj);
-        //         obj_attachment_observer = disconnect(obj_attachment_observer);
-        //     });
-
-        //     const wrappers = collapsers[1].getElementsByClassName("Icon__IconWrapper-sc-ulcl49-0");
-        //     wrappers[0].click();
-        // }
-    });
-    
+    popover_content_observer = waitFirstElement(area, ELEMENTS.POPOVER.CONTENT, waitPopoverContent)
 };
 
 const removePopover = () =>
@@ -1858,6 +1848,7 @@ const removePopover = () =>
     console.log("POPOVER REMOVED");
 
     popover_content_observer = disconnect(popover_content_observer);
+    popover_area_observer = disconnect(popover_area_observer);
     
     g_popover = null;
 };
