@@ -393,6 +393,12 @@ const ELEMENTS =
         {
             tag: "div",
             testId: "uploaded-attachments-list"
+        },
+
+        SAVE_BUTTON:
+        {
+            tag: "button",
+            testId: "save-button"
         }
     },
     
@@ -486,6 +492,7 @@ const g_root = document.getElementById("root");
 
 let g_altBar = null;
 let g_player = null;
+let g_video = null;
 
 const shiftPlayer = (container) =>
 {
@@ -828,6 +835,10 @@ const catchControlBar = (container) =>
     window.addEventListener("keyup", videoKeyUpHandler, true);
 };
 
+let g_last_object_time = null;
+let g_last_video_time = null;
+let g_last_video_step = 0;
+
 const removeControlBar = (container) =>
 {
     console.log("SHOW CONTROLBAR");
@@ -867,6 +878,13 @@ const removeControlBar = (container) =>
 
     detachToolbar();
     if (!!g_up_canvas) detachCanvas();
+
+    g_last_object_time = null;
+    g_last_video_time = null;
+    if (g_video)
+    {
+        g_video = null;
+    }
 };
 
 let g_up_canvas = null;
@@ -1561,6 +1579,22 @@ const catchCanvas = (container) =>
     
     initExtCanvas(true);
     g_rhomb_count = 0;
+
+    if (g_player)
+    {
+        if (!g_video)
+        {
+            g_video = g_player.getElementsByTagName("video")[0];
+        }
+
+        const video_time = parseFloat(g_video.currentTime);
+        if (!!g_last_video_time)
+        {
+            g_last_video_step = video_time - g_last_video_time;
+        }
+        g_last_video_time = video_time;
+        console.log("LAST VIDEO TIME: " + g_last_video_time);
+    }
 };
 
 const initExtCanvas = (trigger) =>
@@ -1970,6 +2004,28 @@ const addObjectDetected = (sidebar) =>
             }
         }
 
+        let object_date = null;
+        let object_time = null;
+
+        const catchSaveButton = () =>
+        {
+            const save_object_button = selectElement(sidebar, ELEMENTS.SIDEBAR.SAVE_BUTTON);
+            if (!!save_object_button)
+            {
+                
+                save_object_button.addEventListener("click", e =>
+                {
+                    if (!!object_date && !!object_time)
+                    {
+                        const date_str = object_date.value.split(/\D+/).reverse().join("-");
+                        const last_object_date = new Date(date_str + " " + object_time.value);
+                        g_last_object_time = last_object_date;
+                        console.log("LAST OBJECT TIME: ", g_last_object_time);
+                    }
+                });
+            }
+        };
+
         const date_elements = sidebar.getElementsByClassName("react-datepicker__input-container");
         if (date_elements.length > 0)
         {
@@ -1978,6 +2034,7 @@ const addObjectDetected = (sidebar) =>
             if (inputs.length > 0)
             {
                 const object_date_input = inputs[0];
+                object_date = object_date_input;
                 object_date_input.focus();
                 setTimeout(() =>
                 {
@@ -2006,10 +2063,46 @@ const addObjectDetected = (sidebar) =>
                                 if (time_inputs.length > 0)
                                 {
                                     const time_input = time_inputs[0];
+                                    object_time = time_input;
                                     time_input.focus();
                                 }
                             }
                         }
+
+                        if (!!g_last_object_time)
+                        {
+                            const next_object_time = g_last_object_time;
+                            next_object_time.setSeconds(next_object_time.getSeconds() + g_last_video_step);
+                            console.log("NEXT OBJECT: " + next_object_time);
+
+                            let noty = next_object_time.getFullYear();
+                            let notm = next_object_time.getMonth();
+                            if (notm < 10) notm = "0" + notm;
+                            let notd = next_object_time.getDate();
+                            if (notd < 10) notd = "0" + notd;
+                            let noth = next_object_time.getHours();
+                            if (noth < 10) noth = "0" + noth;
+                            let noti = next_object_time.getMinutes();
+                            if (noti < 10) noti = "0" + noti;
+
+                            const date_str =  notd + "/" + notm + "/" + noty;
+                            const time_str = noth + ":" + noti;
+
+                            setTimeout(() =>
+                            {
+                                console.log("NEXT OBJECT DATE: " + date_str);
+                                object_date.value = date_str;
+                                triggerInputEvent(object_date, date_str);
+                            }, 50);
+                            setTimeout(() =>
+                            {
+                                console.log("NEXT OBJECT TIME: " + time_str);
+                                object_time.value = time_str;
+                                triggerInputEvent(object_time, time_str);
+                            }, 100);
+                        }
+
+                        catchSaveButton();
                     }, 100);
                 }, 100);
             } 
