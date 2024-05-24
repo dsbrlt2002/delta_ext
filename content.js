@@ -382,6 +382,21 @@ const ELEMENTS =
         {
             tag: "div",
             testId: "FieldContainer-C"
+        },
+        REL_A:
+        {
+            tag: "input",
+            testId: "reliability-key-A"
+        },
+        REL_2:
+        {
+            tag: "input",
+            testId: "reliability-key-2"
+        },
+        COPY_PREV_DT:
+        {
+            tag: "button",
+            testId: "amplifier-W-prev-date-button"
         }
     },
     SIDEBAR:
@@ -1897,6 +1912,116 @@ const OBJECT_NAME_TABLE_BY_LABEL =
     "Сухопутний підрозділ": "Зосередження ВТ та о/с"
 };
 
+const catchSaveButton = (sidebar) =>
+{
+    const save_object_button = selectElement(sidebar, ELEMENTS.SIDEBAR.SAVE_BUTTON);
+    if (!!save_object_button)
+    {
+        
+        save_object_button.addEventListener("click", e =>
+        {
+            if (!!object_date && !!object_time)
+            {
+                const date_str = object_date.value.split(/\D+/).reverse().join("-");
+                const last_object_date = new Date(date_str + " " + object_time.value);
+                g_last_object_time = last_object_date;
+                console.log("LAST OBJECT TIME: ", g_last_object_time);
+            }
+        });
+    }
+};
+
+//
+// Disabled
+//
+const set_object_time_by_video = (sidebar) =>
+{
+    let object_date = null;
+    let object_time = null;
+
+    const date_elements = sidebar.getElementsByClassName("react-datepicker__input-container");
+    if (date_elements.length > 0)
+    {
+        const object_datepicker = date_elements[0];
+        const inputs = object_datepicker.getElementsByTagName("input");
+        if (inputs.length > 0)
+        {
+            const object_date_input = inputs[0];
+            object_date = object_date_input;
+            object_date_input.focus();
+            setTimeout(() =>
+            {
+                const popover_elements = sidebar.getElementsByClassName("react-datepicker-popper");
+                if (popover_elements.length > 0)
+                {
+                    const object_datepicker_popover = popover_elements[0];
+                    const buttons = object_datepicker_popover.getElementsByTagName("button");
+                    if (buttons.length > 0)
+                    {
+                        const object_now_button = buttons[buttons.length - 1];
+                        object_now_button.click();
+                    }
+                }
+
+                setTimeout(() =>
+                {
+                    const date_time_field = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_DATETIME);
+                    if (date_time_field)
+                    {
+                        const time_fields = date_time_field.getElementsByClassName("timePickerContainer");
+                        if (time_fields.length > 0)
+                        {
+                            const time_field = time_fields[0];
+                            const time_inputs = time_field.getElementsByTagName("input");
+                            if (time_inputs.length > 0)
+                            {
+                                const time_input = time_inputs[0];
+                                object_time = time_input;
+                                time_input.focus();
+                            }
+                        }
+                    }
+
+                    if (!!g_last_object_time)
+                    {
+                        const next_object_time = g_last_object_time;
+                        next_object_time.setSeconds(next_object_time.getSeconds() + g_last_video_step);
+                        console.log("NEXT OBJECT: " + next_object_time);
+
+                        let noty = next_object_time.getFullYear();
+                        let notm = next_object_time.getMonth() + 1;
+                        if (notm < 10) notm = "0" + notm;
+                        let notd = next_object_time.getDate();
+                        if (notd < 10) notd = "0" + notd;
+                        let noth = next_object_time.getHours();
+                        if (noth < 10) noth = "0" + noth;
+                        let noti = next_object_time.getMinutes();
+                        if (noti < 10) noti = "0" + noti;
+
+                        const date_str =  notd + "/" + notm + "/" + noty;
+                        const time_str = noth + ":" + noti;
+
+                        setTimeout(() =>
+                        {
+                            console.log("NEXT OBJECT DATE: " + date_str);
+                            object_date.value = date_str;
+                            triggerInputEvent(object_date, date_str);
+                        }, 50);
+                        setTimeout(() =>
+                        {
+                            console.log("NEXT OBJECT TIME: " + time_str);
+                            object_time.value = time_str;
+                            triggerInputEvent(object_time, time_str);
+                        }, 100);
+                    }
+
+                    catchSaveButton();
+                }, 100);
+            }, 100);
+        } 
+    }
+};
+
 const addObjectDetected = (sidebar) =>
 {
     console.log("ADD OBJECT DETECTED");
@@ -2004,108 +2129,18 @@ const addObjectDetected = (sidebar) =>
             }
         }
 
-        let object_date = null;
-        let object_time = null;
-
-        const catchSaveButton = () =>
+        const copyPrevDTButton = selectElement(sidebar, ELEMENTS.ADD_OBJECT.COPY_PREV_DT);
+        if (!!copyPrevDTButton)
         {
-            const save_object_button = selectElement(sidebar, ELEMENTS.SIDEBAR.SAVE_BUTTON);
-            if (!!save_object_button)
-            {
-                
-                save_object_button.addEventListener("click", e =>
-                {
-                    if (!!object_date && !!object_time)
-                    {
-                        const date_str = object_date.value.split(/\D+/).reverse().join("-");
-                        const last_object_date = new Date(date_str + " " + object_time.value);
-                        g_last_object_time = last_object_date;
-                        console.log("LAST OBJECT TIME: ", g_last_object_time);
-                    }
-                });
-            }
-        };
+            copyPrevDTButton.click();
+        }
 
-        const date_elements = sidebar.getElementsByClassName("react-datepicker__input-container");
-        if (date_elements.length > 0)
+        const relAInput = selectElement(sidebar, ELEMENTS.ADD_OBJECT.REL_A);
+        const rel2Input = selectElement(sidebar, ELEMENTS.ADD_OBJECT.REL_2);
+        if (!!relAInput && !!rel2Input)
         {
-            const object_datepicker = date_elements[0];
-            const inputs = object_datepicker.getElementsByTagName("input");
-            if (inputs.length > 0)
-            {
-                const object_date_input = inputs[0];
-                object_date = object_date_input;
-                object_date_input.focus();
-                setTimeout(() =>
-                {
-                    const popover_elements = sidebar.getElementsByClassName("react-datepicker-popper");
-                    if (popover_elements.length > 0)
-                    {
-                        const object_datepicker_popover = popover_elements[0];
-                        const buttons = object_datepicker_popover.getElementsByTagName("button");
-                        if (buttons.length > 0)
-                        {
-                            const object_now_button = buttons[buttons.length - 1];
-                            object_now_button.click();
-                        }
-                    }
-
-                    setTimeout(() =>
-                    {
-                        const date_time_field = selectElement(sidebar, ELEMENTS.ADD_OBJECT.OBJECT_DATETIME);
-                        if (date_time_field)
-                        {
-                            const time_fields = date_time_field.getElementsByClassName("timePickerContainer");
-                            if (time_fields.length > 0)
-                            {
-                                const time_field = time_fields[0];
-                                const time_inputs = time_field.getElementsByTagName("input");
-                                if (time_inputs.length > 0)
-                                {
-                                    const time_input = time_inputs[0];
-                                    object_time = time_input;
-                                    time_input.focus();
-                                }
-                            }
-                        }
-
-                        if (!!g_last_object_time)
-                        {
-                            const next_object_time = g_last_object_time;
-                            next_object_time.setSeconds(next_object_time.getSeconds() + g_last_video_step);
-                            console.log("NEXT OBJECT: " + next_object_time);
-
-                            let noty = next_object_time.getFullYear();
-                            let notm = next_object_time.getMonth();
-                            if (notm < 10) notm = "0" + notm;
-                            let notd = next_object_time.getDate();
-                            if (notd < 10) notd = "0" + notd;
-                            let noth = next_object_time.getHours();
-                            if (noth < 10) noth = "0" + noth;
-                            let noti = next_object_time.getMinutes();
-                            if (noti < 10) noti = "0" + noti;
-
-                            const date_str =  notd + "/" + notm + "/" + noty;
-                            const time_str = noth + ":" + noti;
-
-                            setTimeout(() =>
-                            {
-                                console.log("NEXT OBJECT DATE: " + date_str);
-                                object_date.value = date_str;
-                                triggerInputEvent(object_date, date_str);
-                            }, 50);
-                            setTimeout(() =>
-                            {
-                                console.log("NEXT OBJECT TIME: " + time_str);
-                                object_time.value = time_str;
-                                triggerInputEvent(object_time, time_str);
-                            }, 100);
-                        }
-
-                        catchSaveButton();
-                    }, 100);
-                }, 100);
-            } 
+            relAInput.click();
+            rel2Input.click();
         }
 
         disconnect(select_observer);
