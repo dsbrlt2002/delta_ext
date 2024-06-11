@@ -219,7 +219,7 @@ const waitFirstElement = (parentNode, element, callback, detached, modified) =>
                 if (typeof(callback) == "function" &&
                     m.addedNodes && m.addedNodes.length > 0)
                 {
-                    if (element.className == "elements__SidebarHeader")
+                    if (element.__id == "popover_content")
                     {
                         const a = 0;
                     }
@@ -397,6 +397,29 @@ const ELEMENTS =
         {
             tag: "button",
             testId: "amplifier-W-prev-date-button"
+        },
+        UPLOAD_ATTACHMENT:
+        {
+            tag: "div",
+            testId: "for-upload-attachments-list",
+
+            MENU_BUTTON:
+            {
+                tag: "button",
+                testId: "action-menu-expand-btn"
+            },
+
+            EDIT_FILENAME:
+            {
+                tag: "input",
+                testId: "edit-filename-field"
+            },
+
+            FILENAME_CONFIRM: 
+            {
+                tag: "button",
+                testId: "edit-filename-confirm"
+            }
         }
     },
     SIDEBAR:
@@ -468,12 +491,13 @@ const ELEMENTS =
         CONTAINER:
         {
             tag: "div",
-            className: "elements__PassportContainer-sc"
+            className: "Popover__PopoverContainer-sc"
         },
         CONTENT:
         {
+            __id: "popover_content",
             tag: "div",
-            className: "BattleSpaceObjectPassport__PassportContent"
+            className: "elements__PassportContent-sc"
         },
         ATTACHMENTS:
         {
@@ -1888,6 +1912,7 @@ const catchPopover = (area) =>
     console.log("POPOVER DETECTED");
     //const popover = selectElement(area, ELEMENTS.ELEMENT_POPOVER_AREA.CONTENT);
     g_popover = area;
+    console.log(area);
 
     popover_content_observer = waitFirstElement(area, ELEMENTS.POPOVER.CONTENT, waitPopoverContent)
 };
@@ -1929,6 +1954,23 @@ const catchSaveButton = (sidebar) =>
             }
         });
     }
+};
+
+const formatDateTime = (dt) =>
+{
+    let noty = dt.getFullYear();
+    let notm = dt.getMonth() + 1;
+    if (notm < 10) notm = "0" + notm;
+    let notd = dt.getDate();
+    if (notd < 10) notd = "0" + notd;
+    let noth = dt.getHours();
+    if (noth < 10) noth = "0" + noth;
+    let noti = dt.getMinutes();
+    if (noti < 10) noti = "0" + noti;
+
+    const date_str =  notd + "/" + notm + "/" + noty;
+    const time_str = noth + ":" + noti;
+    return {date:date_str, time:time_str, datetime:date_str + " " + time_str};
 };
 
 //
@@ -1988,30 +2030,19 @@ const set_object_time_by_video = (sidebar) =>
                         next_object_time.setSeconds(next_object_time.getSeconds() + g_last_video_step);
                         console.log("NEXT OBJECT: " + next_object_time);
 
-                        let noty = next_object_time.getFullYear();
-                        let notm = next_object_time.getMonth() + 1;
-                        if (notm < 10) notm = "0" + notm;
-                        let notd = next_object_time.getDate();
-                        if (notd < 10) notd = "0" + notd;
-                        let noth = next_object_time.getHours();
-                        if (noth < 10) noth = "0" + noth;
-                        let noti = next_object_time.getMinutes();
-                        if (noti < 10) noti = "0" + noti;
-
-                        const date_str =  notd + "/" + notm + "/" + noty;
-                        const time_str = noth + ":" + noti;
+                        const dt = formatDateTime(next_object_time);
 
                         setTimeout(() =>
                         {
-                            console.log("NEXT OBJECT DATE: " + date_str);
-                            object_date.value = date_str;
-                            triggerInputEvent(object_date, date_str);
+                            console.log("NEXT OBJECT DATE: " + dt.date);
+                            object_date.value = dt.date;
+                            triggerInputEvent(object_date, dt.date);
                         }, 50);
                         setTimeout(() =>
                         {
-                            console.log("NEXT OBJECT TIME: " + time_str);
-                            object_time.value = time_str;
-                            triggerInputEvent(object_time, time_str);
+                            console.log("NEXT OBJECT TIME: " + dt.time);
+                            object_time.value = dt.time;
+                            triggerInputEvent(object_time, dt.time);
                         }, 100);
                     }
 
@@ -2021,6 +2052,73 @@ const set_object_time_by_video = (sidebar) =>
         } 
     }
 };
+
+
+let g_object_observ_time = null;
+
+const catchAttButton = (sidebar) =>
+{
+    console.log("ATTACHMENT BUTTON CATCHED");
+
+    const att_button = sidebar.querySelector("div[title=Прикріплення]");
+    if (!!att_button)
+    {
+        att_button.addEventListener("click", e =>
+        {
+            const obj_date = sidebar.querySelector("input[data-testid=W]");
+            const obj_time = sidebar.querySelector("input[data-testid=W-time-input]");
+            if (!!obj_date && !!obj_time)
+            {
+                g_object_observ_time = obj_date.value + " " + obj_time.value;
+                console.log("OBJECT OBSERVATION TIME: " + g_object_observ_time);
+            }
+        });   
+    }
+
+    let attachment_upload_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT.UPLOAD_ATTACHMENT, list =>
+    {
+        console.log("UPLOAD ATTACHMENT DETECTED: " + g_object_observ_time);
+
+        if (!!g_object_observ_time)
+        {
+            const menu_button = selectElement(list, ELEMENTS.ADD_OBJECT.UPLOAD_ATTACHMENT.MENU_BUTTON);
+            if (!!menu_button)
+            {
+                menu_button.click();
+                setTimeout(() =>
+                {
+                    const menu = document.body.querySelector("div[role=menu]");
+                    if (!!menu)
+                    {
+                        const edit_name_item = menu.querySelector("button[role=menuitem]");
+                        if (!!edit_name_item)
+                        {
+                            edit_name_item.click();
+                            setTimeout(() =>
+                            {
+                                const filename_input = selectElement(list, ELEMENTS.ADD_OBJECT.UPLOAD_ATTACHMENT.EDIT_FILENAME);
+                                if (!!filename_input)
+                                {
+                                    filename_input.focus();
+                                    filename_input.value = g_object_observ_time;
+                                    triggerInputEvent(filename_input, g_object_observ_time);
+
+                                    const confirm_button = selectElement(list, ELEMENTS.ADD_OBJECT.UPLOAD_ATTACHMENT.FILENAME_CONFIRM);
+                                    if (!!confirm_button)
+                                    {
+                                        confirm_button.click();   
+                                    }
+                                }
+                            }, 500); 
+                        }
+                    }
+                }, 200);
+            }
+        }
+
+        disconnect(attachment_upload_observer);
+    });
+}
 
 const addObjectDetected = (sidebar) =>
 {
@@ -2142,6 +2240,8 @@ const addObjectDetected = (sidebar) =>
             relAInput.click();
             rel2Input.click();
         }
+
+        catchAttButton(sidebar);
 
         disconnect(select_observer);
     });
@@ -2277,6 +2377,13 @@ const editObjectDetected = (sidebar) =>
 
         showAttachmentsPreview(sidebar, ELEMENTS.SIDEBAR.ATTACHMENTS, g_last_url);
     });
+
+    let select_observer = waitFirstElement(sidebar, ELEMENTS.ADD_OBJECT.FORM, form =>
+    {
+        catchAttButton(sidebar);
+
+        disconnect(select_observer);
+    });
 };
 
 let g_sidebar = null;
@@ -2304,7 +2411,11 @@ const detectSidebar = (sidebar) =>
     {
         console.log("SIDEBAR HEADER DETECTED");
         const text = header.innerText.toLowerCase().trim();
-        if (text.includes("створення об"))
+        if(text.includes("редагування об"))
+        {
+            editObjectDetected(sidebar);
+        }
+        else if (text.includes("створення об"))
         {
             addObjectDetected(sidebar);
         }
@@ -2369,7 +2480,7 @@ waitFirstElement(g_root, ELEMENTS.PLAYER, catchPlayer, removeControlBar);
 waitFirstElement(g_root, ELEMENTS.CANVAS, catchCanvas, detachCanvas);
 waitFirstElement(g_root, ELEMENTS.SNAPSHOTS, reorderSnapshots);
 waitFirstElement(g_root, ELEMENTS.SIDEBAR, detectSidebar, removedSidebar);
-waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
+//waitFirstElement(g_root, ELEMENTS.REPORT_DIALOG, initReportDialog);
 
 waitFirstElement(g_root, ELEMENTS.ELEMENT_POPOVER_AREA, catchPopover, removePopover);
 
