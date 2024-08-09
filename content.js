@@ -1518,7 +1518,13 @@ const catchToolbar = (container) =>
         setTimeout(() =>
         {
             const nodes = g_player.getElementsByTagName("video");
-            const rect = nodes[0].getBoundingClientRect();
+
+            let rect_element = g_up_canvas;
+            if (nodes.length > 0)
+            {
+                rect_element = nodes[0];
+            }
+            const rect = rect_element.getBoundingClientRect();
             const x = rect.width - 80;
             const y = 80;
             triggerMouseDown(g_up_canvas, x, y);
@@ -1582,6 +1588,7 @@ const catchToolbar = (container) =>
             g_save_button.addEventListener("click", e =>
             {
                 console.log("COPY IMAGE emulate click");
+                triggerMouseDown(g_up_canvas, 1, 1);
                 g_copy_button.click();
             });
         }
@@ -1626,13 +1633,16 @@ const catchCanvas = (container) =>
             g_video = g_player.getElementsByTagName("video")[0];
         }
 
-        const video_time = parseFloat(g_video.currentTime);
-        if (!!g_last_video_time)
+        if (!!g_video)
         {
-            g_last_video_step = video_time - g_last_video_time;
+            const video_time = parseFloat(g_video.currentTime);
+            if (!!g_last_video_time)
+            {
+                g_last_video_step = video_time - g_last_video_time;
+            }
+            g_last_video_time = video_time;
+            console.log("LAST VIDEO TIME: " + g_last_video_time);
         }
-        g_last_video_time = video_time;
-        console.log("LAST VIDEO TIME: " + g_last_video_time);
     }
 };
 
