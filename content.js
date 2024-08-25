@@ -1428,6 +1428,7 @@ let g_compas_button = null;
 let g_orientir_button = null;
 let g_save_button = null;
 let g_copy_button = null;
+let g_sel_button = null;
 
 let g_selbutton_observer = null;
 let g_delbutton_observer = null;
@@ -1461,12 +1462,17 @@ const catchToolbar = (container) =>
         g_remember_last_button.set();
     };
 
-    const catchButton = (button, id) =>
+    const catchButton = (button, id, callback) =>
     {
         if (!button.id)
         {
             button.id = id;
             button.addEventListener("click", catchedButtonClick);
+
+            if (typeof(callback) == "function")
+            {
+                callback(button, id);
+            }
         }
     };
 
@@ -1559,7 +1565,7 @@ const catchToolbar = (container) =>
     g_selbutton_observer = waitFirstElement(toolbar, ELEMENTS.SELECT_BUTTON, button =>
     {
         console.log("SELECT button detected");
-        catchButton(button, "catched_toolbutton_select");
+        catchButton(button, "catched_toolbutton_select", () => g_sel_button = button);
     });
     g_delbutton_observer = waitFirstElement(toolbar, ELEMENTS.DELETE_BUTTON, button =>
     {
@@ -1588,7 +1594,11 @@ const catchToolbar = (container) =>
             g_save_button.addEventListener("click", e =>
             {
                 console.log("COPY IMAGE emulate click");
-                triggerMouseDown(g_up_canvas, 1, 1);
+
+                if (!!g_sel_button) g_sel_button.click();
+                triggerMouseDown(g_up_canvas, 1, 100 /*to don't hit supporting shapes on 0x0 */);
+                triggerMouseUp(g_up_canvas, 1, 100);
+
                 g_copy_button.click();
             });
         }
