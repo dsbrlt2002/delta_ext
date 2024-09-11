@@ -425,7 +425,7 @@ const ELEMENTS =
     SIDEBAR:
     {
         tag: "div",
-        className: "SideBar__SidebarContent",
+        className: "elements__SidebarContent",//"SideBar__SidebarContent",
 
         ATTACHMENTS:
         {
@@ -2408,9 +2408,10 @@ const editObjectDetected = (sidebar) =>
 
 let g_sidebar = null;
 let g_object_observer = null;
-const detectSidebar = (sidebar) =>
+const detectSidebar = (sidebar_content) =>
 {
     console.log("SIDEBAR DETECTED");
+    const sidebar = sidebar_content.parentNode;
     g_sidebar = sidebar;
 
     const header = selectElement(sidebar, ELEMENTS.SIDEBAR_HEADER);
