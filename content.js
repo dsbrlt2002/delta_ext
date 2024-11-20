@@ -2151,16 +2151,28 @@ const addObjectDetected = (sidebar) =>
     {
         console.log("OBJECT FORM LOADED");
         const selector = selectElement(form, ELEMENTS.ADD_OBJECT.TYPE_SELECTOR);
+        //console.log("SELECTOR: ", selector);
         const value_div = selectElement(selector, {tag: "div", className: "singleValue"});
         const value = value_div.innerText.toLowerCase().trim();
         if (value.includes("невідомий"))
         {
             console.log("Object type is UNKNOWN");
-            const field = selector.firstChild.lastChild.lastChild;
+            const fieldContainer = selector.firstChild.lastChild;
+            //console.log("FIELD_CONTAINER: ", fieldContainer);
+            const fieldElements = fieldContainer.querySelectorAll("div."+fieldContainer.className.trim()+">div");
+            const field = fieldElements[fieldElements.length - 1];
+            //console.log("FIELD: ", field);
+
             triggerMouseDown(field, 10, 10);
             setTimeout(() =>
             {
-                const options = selector.firstChild.lastChild.lastChild.firstChild.children;
+                const listContainer = selector.firstChild.lastChild;
+                //console.log("LIST_CONTAINER: ", listContainer);
+                const listElements = listContainer.querySelectorAll("div."+listContainer.className.trim()+">div");
+                const selectorList = listElements[listElements.length - 1];
+                //console.log("SELECTOR_LIST: ", selectorList);
+                const options = selectorList.firstChild.children;
+                
                 for (let i = 0; i < options.length; i++)
                 {
                     const text = options[i].innerText.toLowerCase().trim();
